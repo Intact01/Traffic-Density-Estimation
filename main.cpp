@@ -1,7 +1,10 @@
 #include "opencv2/opencv.hpp"
 #include <iostream>
+#include <algorithm>
+#include <vector>
 
-int counter = 0, frames = 0;
+
+int counter = 0;
 cv::Mat source_image;
 cv::Mat cache_image;
 cv::Mat original_image;
@@ -13,12 +16,24 @@ std::vector<cv::Point2f> source_points;
 void mouse_callback(int event, int x, int y, int flag, void *param);
 void crop_image(cv::Mat, std::vector<cv::Point2f> points);
 
+int cmp_x(const cv::Point2f &lhs, const cv::Point2f &rhs) {
+      return lhs.x < rhs.x;
+}
+int cmp_y(const cv::Point2f &lhs, const cv::Point2f &rhs) {
+      return lhs.y < rhs.y;
+}
+
 void processImage(){
     std::vector<cv::Point2f> destination_points;
     destination_points.push_back(cv::Point2f(472,52));
     destination_points.push_back(cv::Point2f(472,830));
-    destination_points.push_back(cv::Point2f(800,830));
     destination_points.push_back(cv::Point2f(800,52));
+    destination_points.push_back(cv::Point2f(800,830));
+
+    std::stable_sort(source_points.begin(), source_points.end(), cmp_x);
+    std::stable_sort(source_points.begin(), source_points.begin() + 2, cmp_y);
+    std::stable_sort(source_points.begin()+2, source_points.begin() + 4, cmp_y);
+
 
     cv::Mat homography_matrix = cv::findHomography(source_points, destination_points);
 
@@ -75,7 +90,7 @@ void mouse_callback(int event, int x, int y, int flag, void *param)
     }
     else if (event == cv::EVENT_MOUSEMOVE)
     {
-        if (frames++ % 10 == 0 && counter > 0 && counter < 4)
+        if (counter > 0 && counter < 4)
         {
             source_image.copyTo(cache_image);
             cv::line(cache_image, source_points[counter - 1], newpt, green, 1, 8, 0);
@@ -88,7 +103,6 @@ int main(int argc, char **argv)
 {
     std::string image_name;
 
-    // std::cout<<argc<<" "<<argv[1]<<std::endl;
     if (argc == 2)
     {
         image_name = argv[1];
