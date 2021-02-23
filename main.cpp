@@ -1,4 +1,5 @@
 #include "opencv2/opencv.hpp"
+#include "arg_parser.hpp"
 #include <iostream>
 #include <algorithm>
 
@@ -47,13 +48,12 @@ void processImage()
 
     // Draw points and lines on output image
 
-    int order[]{0,1,3,2,0};
-    for (int i=0;i<4;i++){
+    int order[]{0, 1, 3, 2, 0};
+    for (int i = 0; i < 4; i++)
+    {
         cv::circle(output_image_with_lines, destination_points[i], 5, green, 2, 8, 0);
-        cv::line(output_image_with_lines, destination_points[order[i]], destination_points[order[i+1]], green, 1, 8, 0);
+        cv::line(output_image_with_lines, destination_points[order[i]], destination_points[order[i + 1]], green, 1, 8, 0);
     }
-    
-
 
     string helpText = "Press any key to crop, Esc. to cancel";
     cv::Point textPos = cv::Point2f(destination_points[0].x - 100, (destination_points[0].y + destination_points[1].y) / 2);
@@ -128,19 +128,11 @@ void mouse_callback(int event, int x, int y, int flag, void *param)
 }
 
 int main(int argc, char **argv)
-{
+{    
     string image_name;
 
-    if (argc == 2)
-    {
-        image_name = argv[1];
-    }
-    else
-    {
-        cout << "Please enter ONE argument : the name of the image file"
-             << "\n";
-        return -1;
-    }
+    image_name = parse(argc,argv);
+    if (image_name == "") return -1;
     source_image = cv::imread(image_name, cv::IMREAD_GRAYSCALE);
     if (source_image.empty())
     {
