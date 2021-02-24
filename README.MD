@@ -4,6 +4,7 @@
 
 
 ### Installation and Building (for Ubuntu)
+
 ``` bash
 $ sudo apt install libboost-all-dev  
 $ make
@@ -26,7 +27,11 @@ $ make clean
     <td>produce help message</td>
  </tr>
  <tr>
-    <td>-f, --filename < filename > </td>
+    <td>-f, --filename < filepath > </td>
     <td>image filename</td>
+ </tr>
+ <tr>
+    <td>-c, --custom </td>
+    <td>enter custom destination points</td>
  </tr>
 </table>

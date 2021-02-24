@@ -1,10 +1,11 @@
-#include "opencv2/opencv.hpp"
-#include "arg_parser.hpp"
 #include <iostream>
 #include <algorithm>
 
-using namespace std;
+#include "opencv2/opencv.hpp"
+#include "arg_parser.hpp"
+#include "image_operations.hpp"
 
+using namespace std;
 int counter = 0;
 cv::Mat source_image;   //input image with guide lines and mouse-click points
 cv::Mat cache_image;    //input image with mouse point tracking line
@@ -15,7 +16,6 @@ vector<cv::Point2f> destination_points; //Points in the transformed image corres
 
 //function declarations
 void mouse_callback(int event, int x, int y, int flag, void *param);
-void crop_image(cv::Mat, vector<cv::Point2f> points);
 
 //comparator functions used in sorting
 int cmp_x(const cv::Point2f &lhs, const cv::Point2f &rhs)
@@ -37,9 +37,9 @@ void processImage()
     stable_sort(source_points.begin() + 2, source_points.begin() + 4, cmp_y);
 
     //sort destination_points
-    stable_sort(source_points.begin(), source_points.end(), cmp_x);
-    stable_sort(source_points.begin(), source_points.begin() + 2, cmp_y);
-    stable_sort(source_points.begin() + 2, source_points.begin() + 4, cmp_y);
+    stable_sort(destination_points.begin(), destination_points.end(), cmp_x);
+    stable_sort(destination_points.begin(), destination_points.begin() + 2, cmp_y);
+    stable_sort(destination_points.begin() + 2, destination_points.begin() + 4, cmp_y);
 
     //calculate perspective transformation matrix
     cv::Mat homography_matrix = cv::findHomography(source_points, destination_points);
@@ -48,8 +48,13 @@ void processImage()
     cv::Mat output_image_with_lines; //Transformed image with lines displaying crop-area
 
     //Transform perpective of original_image to output_image and store output_image to device
+    try{
     cv::warpPerspective(original_image, output_image, homography_matrix, source_image.size());
-    cv::imwrite("transformed.jpg", output_image);
+    }catch(cv::Exception e){
+        cout << e.what()<<endl;
+        return;
+    }
+    
 
     output_image.copyTo(output_image_with_lines);
     cv::destroyWindow("Source Image");
@@ -63,7 +68,7 @@ void processImage()
     }
 
     // Display message
-    string helpText = "Press any key to crop, Esc. to cancel";
+    string helpText = "Press any key to confirm, Esc. to cancel";
     cv::Point textPos = cv::Point2f(destination_points[0].x - 100, (destination_points[0].y + destination_points[1].y) / 2);
     cv::putText(output_image_with_lines, helpText, textPos, cv::FONT_HERSHEY_PLAIN, 2.0, green, 2, true);
 
@@ -80,23 +85,8 @@ void processImage()
         exit(-1);
     }
     cv::destroyWindow("Transformed Image");
-    crop_image(output_image, destination_points);
-}
-
-// crops given image img into a rectanglular area described by given points
-//stores cropped image
-void crop_image(cv::Mat img, vector<cv::Point2f> points)
-{
-    // crop area
-    cv::Rect crop_area;
-    crop_area.width = points[3].x - points[0].x;
-    crop_area.height = points[1].y - points[0].y;
-    crop_area.x = points[0].x;
-    crop_area.y = points[0].y;
-
-    // crop the image
-    // show and store the cropped image
-    cv::Mat cropped_image = img(crop_area);
+    cv::imwrite("transformed.jpg", output_image);
+    cv::Mat cropped_image = crop_image(output_image, destination_points);
     cv::imshow("Cropped Image", cropped_image);
     cv::imwrite("cropped.jpg", cropped_image);
     cv::waitKey(0);
@@ -155,15 +145,19 @@ void mouse_callback(int event, int x, int y, int flag, void *param)
 // initializing destination points
 void initialize(bool custom_input)
 {
-    if (custom_input){
-        cout<<"Please enter 4 destination points."<<endl;
-        for (int i = 1; i<5; i++){
-            cout<<"Enter coordinates of point "<<i<<endl;
+    if (custom_input)
+    {
+        cout << "Please enter 4 destination points." << endl;
+        for (int i = 1; i < 5; i++)
+        {
+            cout << "Enter space-separated coordinates of point " << i <<":"<< endl;
             int temp_x, temp_y;
             cin >> temp_x >> temp_y;
-            destination_points.push_back(cv::Point2f(temp_x,temp_y));
+            destination_points.push_back(cv::Point2f(temp_x, temp_y));
         }
-    }else{
+    }
+    else
+    {
         destination_points.push_back(cv::Point2f(472, 52));
         destination_points.push_back(cv::Point2f(472, 830));
         destination_points.push_back(cv::Point2f(800, 52));
@@ -174,11 +168,11 @@ void initialize(bool custom_input)
 // main function
 int main(int argc, char **argv)
 {
-    pair<string,bool> options; //image path/name
-    
+    pair<string, bool> options; //image path/name
+
     options = parse(argc, argv);
     string imageName = options.first;
-    
+
     if (imageName == "")
         return -1;
 

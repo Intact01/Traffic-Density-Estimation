@@ -1,4 +1,6 @@
 *.jpg
+!empty.jpg
+!traffic.jpg
 *.png
 *.out
 *.o
