@@ -7,17 +7,17 @@
 
 using namespace std;
 int counter = 0;
-cv::Mat source_image;   //input image with guide lines and mouse-click points
-cv::Mat cache_image;    //input image with mouse point tracking line
-cv::Mat original_image; //input image
+cv::Mat source_image;   // input image with guide lines and mouse-click points
+cv::Mat cache_image;    // input image with mouse point tracking line
+cv::Mat original_image; // input image
 cv::Scalar green = cv::Scalar(0, 255, 0);
-vector<cv::Point2f> source_points;      //points clicked by user
-vector<cv::Point2f> destination_points; //Points in the transformed image corresponding to the source_points
+vector<cv::Point2f> source_points;      // points clicked by user
+vector<cv::Point2f> destination_points; // Points in the transformed image corresponding to the source_points
 
-//function declarations
+// function declarations
 void mouse_callback(int event, int x, int y, int flag, void *param);
 
-//comparator functions used in sorting
+// comparator functions used in sorting
 int cmp_x(const cv::Point2f &lhs, const cv::Point2f &rhs)
 {
     return lhs.x < rhs.x;
@@ -27,28 +27,33 @@ int cmp_y(const cv::Point2f &lhs, const cv::Point2f &rhs)
     return lhs.y < rhs.y;
 }
 
-bool isEnterKey(int key){
+// Enter keys' detection
+bool isEnterKey(int key)
+{
     return key == 13 || key == 141;
 }
 
-bool isEscKey(int key){
+// Escape key detection
+bool isEscKey(int key)
+{
     return key == 27;
 }
-//Tranformes perspective of original image
-//Stores transformed image
+
+// Tranformes perspective of original image
+// Stores transformed image
 void processImage()
 {
-    //sort source_points
+    // sort source_points
     stable_sort(source_points.begin(), source_points.end(), cmp_x);
     stable_sort(source_points.begin(), source_points.begin() + 2, cmp_y);
     stable_sort(source_points.begin() + 2, source_points.begin() + 4, cmp_y);
 
-    //sort destination_points
+    // sort destination_points
     stable_sort(destination_points.begin(), destination_points.end(), cmp_x);
     stable_sort(destination_points.begin(), destination_points.begin() + 2, cmp_y);
     stable_sort(destination_points.begin() + 2, destination_points.begin() + 4, cmp_y);
 
-    //calculate perspective transformation matrix
+    // calculate perspective transformation matrix
     cv::Mat homography_matrix = cv::findHomography(source_points, destination_points);
 
     cv::Mat output_image;            //Transformed image
@@ -65,7 +70,8 @@ void processImage()
         return;
     }
 
-   
+
+    // Crop smallest part containing the transformed image
     cv::Rect boundingRect = getBoundingRectangle(output_image);
     output_image = output_image(boundingRect);
 
@@ -90,14 +96,18 @@ void processImage()
     cv::imshow("Transformed Image", output_image_with_lines);
     cout << helpText << endl;
 
-    //if key is escape => cancel else crop the transformed image
-    while(1){
+    //if key is escape => cancel
+    //if key is Enter => confirm
+    while (1)
+    {
         int key = cv::waitKey(0);
-        if ( isEnterKey(key) )
+        if (isEnterKey(key))
             break;
         else if (isEscKey(key))
             exit(1);
     }
+
+    // crop the transformed image and save the images
     cv::destroyWindow("Transformed Image");
     cv::imwrite("transformed.jpg", output_image);
     cv::Rect cropRect = getRectFromPoints(destination_points);
@@ -108,7 +118,8 @@ void processImage()
     while (1)
     {
         int key = cv::waitKey(0);
-        if (isEnterKey(key)) break;
+        if (isEnterKey(key))
+            break;
     }
 }
 
@@ -188,10 +199,10 @@ void initialize(bool custom_input)
 // main function
 int main(int argc, char **argv)
 {
-    pair<string, bool> options; //image path/name
+    pair<string, bool> options; //image path, custom
 
     options = parse(argc, argv);
-    string imageName = options.first;
+    string imageName = options.first;   // image path
 
     if (imageName == "")
         return -1;
@@ -218,7 +229,8 @@ int main(int argc, char **argv)
     while (1)
     {
         int key = cv::waitKey(0);
-        if (isEnterKey(key)) break;
+        if (isEnterKey(key))
+            break;
     }
     return 0;
 }
