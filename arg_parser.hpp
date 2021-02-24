@@ -4,15 +4,23 @@
 using namespace std;
 namespace po = boost::program_options;
 
-const string file_name_opt = "filename";
+const string file_name_opt = "file";
 const string help_opt = "help";
+const string custom_input_opt = "custom";
+const char *help_opt_name = "help,h";
+const char *file_name_opt_name = "file,f";
+const char *custom_input_opt_name = "custom,c";
 
-const char *file_name_opt_name = "filename,f";
-
-string parse(int argc, char **argv)
+pair<string,bool> parse(int argc, char **argv)
 {
+    pair<string,bool> options = make_pair("",false);
+    
     po::options_description desc("Allowed options");
-    desc.add_options()("help,h", "produce help message")(file_name_opt_name, po::value<string>(), "image filename");
+    desc.add_options()
+        (help_opt_name, "produce help message")
+        (file_name_opt_name, po::value<string>() -> required(), "image filename")
+        (custom_input_opt_name, "enter custom destination points");
+    
     string fileName;
     try
     {
@@ -22,7 +30,11 @@ string parse(int argc, char **argv)
         if (variable_map.count(file_name_opt))
         {
             fileName = variable_map[file_name_opt].as<string>();
-            return fileName;
+            options.first = fileName;
+
+            if (variable_map.count(custom_input_opt)){
+                options.second = true;
+            }
         }
         else if (variable_map.count(help_opt))
         {
@@ -37,5 +49,5 @@ string parse(int argc, char **argv)
     {
         std::cerr << ex.what() << '\n';
     }
-    return "";
+    return options;
 }
