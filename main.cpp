@@ -27,6 +27,13 @@ int cmp_y(const cv::Point2f &lhs, const cv::Point2f &rhs)
     return lhs.y < rhs.y;
 }
 
+bool isEnterKey(int key){
+    return key == 13 || key == 141;
+}
+
+bool isEscKey(int key){
+    return key == 27;
+}
 //Tranformes perspective of original image
 //Stores transformed image
 void processImage()
@@ -48,15 +55,22 @@ void processImage()
     cv::Mat output_image_with_lines; //Transformed image with lines displaying crop-area
 
     //Transform perpective of original_image to output_image and store output_image to device
-    try{
-    cv::warpPerspective(original_image, output_image, homography_matrix, source_image.size());
-    }catch(cv::Exception e){
-        cout << e.what()<<endl;
+    try
+    {
+        cv::warpPerspective(original_image, output_image, homography_matrix, source_image.size());
+    }
+    catch (cv::Exception e)
+    {
+        cout << e.what() << endl;
         return;
     }
-    
+
+   
+    cv::Rect boundingRect = getBoundingRectangle(output_image);
+    output_image = output_image(boundingRect);
 
     output_image.copyTo(output_image_with_lines);
+
     cv::destroyWindow("Source Image");
 
     // Draw points and lines on output_image_with_lines
@@ -64,11 +78,11 @@ void processImage()
     for (int i = 0; i < 4; i++)
     {
         cv::circle(output_image_with_lines, destination_points[i], 5, green, 2, 8, 0);
-        cv::line(output_image_with_lines, destination_points[order[i]], destination_points[order[i + 1]], green, 1, 8, 0);
+        cv::line(output_image_with_lines, destination_points[order[i]], destination_points[order[i + 1]], green, 2, 8, 0);
     }
 
     // Display message
-    string helpText = "Press any key to confirm, Esc. to cancel";
+    string helpText = "Press Enter to confirm, Esc. to cancel";
     cv::Point textPos = cv::Point2f(destination_points[0].x - 100, (destination_points[0].y + destination_points[1].y) / 2);
     cv::putText(output_image_with_lines, helpText, textPos, cv::FONT_HERSHEY_PLAIN, 2.0, green, 2, true);
 
@@ -76,20 +90,26 @@ void processImage()
     cv::imshow("Transformed Image", output_image_with_lines);
     cout << helpText << endl;
 
-    //wait for user to press a key
-    int key = cv::waitKey(0);
-
     //if key is escape => cancel else crop the transformed image
-    if (key == 27)
-    {
-        exit(-1);
+    while(1){
+        int key = cv::waitKey(0);
+        if ( isEnterKey(key) )
+            break;
+        else if (isEscKey(key))
+            exit(1);
     }
     cv::destroyWindow("Transformed Image");
     cv::imwrite("transformed.jpg", output_image);
-    cv::Mat cropped_image = crop_image(output_image, destination_points);
+    cv::Rect cropRect = getRectFromPoints(destination_points);
+    cv::Mat cropped_image = output_image(cropRect);
     cv::imshow("Cropped Image", cropped_image);
     cv::imwrite("cropped.jpg", cropped_image);
-    cv::waitKey(0);
+
+    while (1)
+    {
+        int key = cv::waitKey(0);
+        if (isEnterKey(key)) break;
+    }
 }
 
 // tracks mouse events
@@ -114,7 +134,7 @@ void mouse_callback(int event, int x, int y, int flag, void *param)
         if (counter > 1 && counter <= 4)
         {
             // join clicked point with previously clicked point
-            cv::line(source_image, source_points[counter - 2], source_points[counter - 1], green, 1, 8, 0);
+            cv::line(source_image, source_points[counter - 2], source_points[counter - 1], green, 2, 8, 0);
             cv::imshow("Source Image", source_image);
         }
 
@@ -122,7 +142,7 @@ void mouse_callback(int event, int x, int y, int flag, void *param)
         if (counter == 4)
         {
             // complete the rectangle
-            cv::line(source_image, source_points[0], source_points[counter - 1], green, 1, 8, 0);
+            cv::line(source_image, source_points[0], source_points[counter - 1], green, 2, 8, 0);
             cv::imshow("Source Image", source_image);
             processImage();
         }
@@ -136,7 +156,7 @@ void mouse_callback(int event, int x, int y, int flag, void *param)
         {
             // show mouse pointer by a line joined to previously clicked point
             source_image.copyTo(cache_image);
-            cv::line(cache_image, source_points[counter - 1], newpt, green, 1, 8, 0);
+            cv::line(cache_image, source_points[counter - 1], newpt, green, 2, 8, 0);
             cv::imshow("Source Image", cache_image);
         }
     }
@@ -150,7 +170,7 @@ void initialize(bool custom_input)
         cout << "Please enter 4 destination points." << endl;
         for (int i = 1; i < 5; i++)
         {
-            cout << "Enter space-separated coordinates of point " << i <<":"<< endl;
+            cout << "Enter space-separated coordinates of point " << i << ":" << endl;
             int temp_x, temp_y;
             cin >> temp_x >> temp_y;
             destination_points.push_back(cv::Point2f(temp_x, temp_y));
@@ -194,6 +214,11 @@ int main(int argc, char **argv)
     cv::imshow("Source Image", source_image);
 
     cv::setMouseCallback("Source Image", mouse_callback);
-    cv::waitKey(0);
+
+    while (1)
+    {
+        int key = cv::waitKey(0);
+        if (isEnterKey(key)) break;
+    }
     return 0;
 }
