@@ -1,19 +1,10 @@
 #include <iostream>
-#include <algorithm>
 #include <cmath>
 
-#include "opencv2/opencv.hpp"
 #include "arg_parser.hpp"
 #include "image_operations.hpp"
 #include "density.hpp"
-
-using namespace std;
-
-int counter = 0;
-cv::Scalar green = cv::Scalar(0, 255, 0);
-// vector_point scr_pts{Pt(805, 215), Pt(35, 836), Pt(1482, 825), Pt(1277, 212)};
-// vector_point dest_pts{Pt(472, 52), Pt(472, 830), Pt(800, 52), Pt(800, 830)};
-// function declarations
+#include "graphs.hpp"
 
 cv::VideoCapture getImageStream(string videoPath)
 {
@@ -29,18 +20,16 @@ cv::VideoCapture getImageStream(string videoPath)
 // main function
 int main(int argc, char **argv)
 {
-    // pair<string, bool> options; //image path, custom
+    int frameRate = 15;
+    string videoPath = "trafficvideo.mp4";
+    string imagePath = "output.png";
 
-    // options = parse(argc, argv);
-    // string imageName = options.first; // image path
+    parse(argc, argv, imagePath, videoPath, frameRate);
 
-    string video_path = "trafficvideo.mp4";
-    string imageName = "output.jpg";
+    cv::VideoCapture capture = getImageStream(videoPath);
+    vector<double> queue_density_list = queue_density(capture, frameRate);
 
-    cv::Mat image = cv::imread(imageName, cv::IMREAD_GRAYSCALE);
-
-    cv::VideoCapture capture = getImageStream(video_path);
-    queue_density(capture, image, 5);
+    make_graph(queue_density_list, imagePath, frameRate);
 
     return 0;
 }
