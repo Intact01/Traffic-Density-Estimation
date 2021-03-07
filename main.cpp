@@ -27,9 +27,11 @@ int main(int argc, char **argv)
     parse(argc, argv, imagePath, videoPath, frameRate);
 
     cv::VideoCapture capture = getImageStream(videoPath);
-    vector<double> queue_density_list = queue_density(capture, frameRate);
+    vector<double> queue_density_list, moving_density_list;
 
-    make_graph(queue_density_list, imagePath, frameRate);
+    calc_density(queue_density_list, moving_density_list, capture, frameRate);
+
+    make_graph(queue_density_list, moving_density_list, imagePath, frameRate);
 
     return 0;
 }
