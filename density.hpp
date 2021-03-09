@@ -48,7 +48,7 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
 
     frame.copyTo(next);
 
-    int erosion_size = 1;
+    int erosion_size = 2;
     cv::Mat element1 = cv::getStructuringElement(cv::MORPH_RECT,
                                                  cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
                                                  cv::Point(erosion_size, erosion_size));
@@ -77,6 +77,9 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
 
     cv::merge(_hsv, 3, hsv);
     hsv.convertTo(hsv8, CV_8U, 255.0);
+
+    cv::medianBlur(hsv8, hsv8, 5);
+
     cv::cvtColor(hsv8, bgr, cv::COLOR_HSV2BGR);
     cv::cvtColor(bgr, gray, cv::COLOR_BGR2GRAY);
 
@@ -87,7 +90,9 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
 
     cv::threshold(gray, thresh, 25, 255, cv::THRESH_BINARY);
 
-    cv::dilate(thresh, thresh, 0);
+    cv::imshow("thresh0", thresh);
+
+    cv::dilate(thresh, thresh, element1);
 
     // cv::findContours(thresh, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
     // int contour_area = 0;
@@ -179,16 +184,17 @@ int processMotion3(bagSub pBackSub, cv::Mat frame)
     cv::waitKey(30);
     return val;
 }
-// void averageMovingDensity(vector<double> &moving_density_list)
-// {
-//     for (int i = 2; i < moving_density_list.size() - 2; ++i)
-//     {
-//         moving_density_list[i] = (moving_density_list[i - 2] + moving_density_list[i - 1] + moving_density_list[i] + moving_density_list[i + 1] + moving_density_list[i + 2]) / 5;
-//     }
-// }
-
-void calc_density(vector<double> &queue_density_list, vector<double> &moving_density_list, cv::VideoCapture capture, int fast_forward)
+void averageMovingDensity(vector<double> &moving_density_list)
 {
+    for (int i = 2; i < moving_density_list.size() - 2; ++i)
+    {
+        moving_density_list[i] = (moving_density_list[i - 2] + moving_density_list[i - 1] + moving_density_list[i] + moving_density_list[i + 1] + moving_density_list[i + 2]) / 5;
+    }
+}
+
+void calc_density(vector<double> &queue_density_list, vector<double> &moving_density_list, cv::VideoCapture capture, int fast_forward, vector_point source_points)
+{
+    cout << "in calc density";
     cv::Mat frame, prvs, next;
     capture >> frame;
 
@@ -198,7 +204,7 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
     int index = 0;
 
     cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-    prvs = cameraCorrection(frame, scr_pts, dest_pts);
+    prvs = cameraCorrection(frame, source_points, dest_pts);
 
     // vector<double> queue_density_list;
     // vector<double> moving_density_list;
@@ -221,15 +227,15 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
             break;
 
         cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-        frame = cameraCorrection(frame, scr_pts, dest_pts);
+        frame = cameraCorrection(frame, source_points, dest_pts);
 
         int queueSum = processQueue(frame, pBackSub1);
         // double queue_density = (double)queueSum / 255.0 / total_pixels;
         double queue_density = (double)queueSum / total_pixels;
         queue_density_list.push_back(queue_density);
 
-        // int changed_pixels = processMotion2(frame, prvs, next);
-        int changed_pixels = processMotion3(pBackSub2, frame);
+        int changed_pixels = processMotion(frame, prvs, next);
+        // int changed_pixels = processMotion3(pBackSub2, frame);
 
         double moving_density = (double)changed_pixels / total_pixels;
         original_moving_list.push_back(moving_density);
@@ -246,7 +252,7 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
         update(queue_density, moving_density);
     }
     std::cout << "Voila" << endl;
-    // averageMovingDensity(moving_density_list);
+    averageMovingDensity(moving_density_list);
     // cout << queue_density_list;
     // return queue_density_list;
 }
