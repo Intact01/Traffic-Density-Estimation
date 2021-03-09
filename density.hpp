@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include "properties.hpp"
+#include "graphs.hpp"
 
 typedef cv::Ptr<cv::BackgroundSubtractor> bagSub;
 
@@ -12,31 +13,33 @@ int processQueue(cv::Mat frame, bagSub pBackSub)
     cv::Mat element1 = cv::getStructuringElement(cv::MORPH_RECT,
                                                  cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
                                                  cv::Point(erosion_size, erosion_size));
-    int dilation_size = 3;
+    int dilation_size = 2;
     cv::Mat element2 = cv::getStructuringElement(cv::MORPH_RECT,
                                                  cv::Size(2 * dilation_size + 1, 2 * dilation_size + 1),
                                                  cv::Point(dilation_size, dilation_size));
     pBackSub->apply(frame, fgMask, 0);
     fgMask.copyTo(frame1);
     cv::Mat thresh;
-    // cv::erode(fgMask, thresh, element1);
-    // cv::threshold(thresh, thresh, 207, 255, cv::THRESH_BINARY);
+    cv::erode(fgMask, thresh, element2);
+    cv::dilate(frame1, frame1, element2);
+
+    cv::threshold(frame1, frame1, 127, 255, cv::THRESH_BINARY);
     //
-    // cv::dilate(thresh, frame1, element2);
+    cv::dilate(frame1, frame1, element2);
     // cv::normalize(fgMask, frame1, 0.0f, 1.0f, cv::NORM_MINMAX);
     // thresh.copyTo(frame1);
-    double sum = cv::sum(frame1)[0];
+    // double sum = cv::sum(frame1)[0];
     // cout << sum << " " << counter << endl;
-    // int val = cv::countNonZero(frame1);
+    int val = cv::countNonZero(frame1);
     // cout << val << " " << counter << endl;
 
     // cv::imshow("Frame", frame);
     // cv::imshow("FG Mask", fgMask);
-    // cv::imshow("frame1", frame1);
+    cv::imshow("frame1", frame1);
 
-    // int keyboard = cv::waitKey(30);
+    int keyboard = cv::waitKey(30);
     // if (keyboard == 'q' || keyboard == 27)
-    return sum;
+    return val;
 }
 
 int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
@@ -45,7 +48,7 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
 
     frame.copyTo(next);
 
-    int erosion_size = 5;
+    int erosion_size = 1;
     cv::Mat element1 = cv::getStructuringElement(cv::MORPH_RECT,
                                                  cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
                                                  cv::Point(erosion_size, erosion_size));
@@ -66,7 +69,7 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     cv::normalize(magnitude, magn_norm, 0.0f, 1.0f, cv::NORM_MINMAX);
     angle *= ((1.f / 360.f) * (180.f / 255.f));
 
-    cv::Mat _hsv[3], hsv, hsv8, bgr, grey, thresh;
+    cv::Mat _hsv[3], hsv, hsv8, bgr, gray, thresh;
 
     _hsv[0] = angle;
     _hsv[1] = cv::Mat::ones(angle.size(), CV_32F);
@@ -75,12 +78,28 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     cv::merge(_hsv, 3, hsv);
     hsv.convertTo(hsv8, CV_8U, 255.0);
     cv::cvtColor(hsv8, bgr, cv::COLOR_HSV2BGR);
-    cv::cvtColor(bgr, grey, cv::COLOR_BGR2GRAY);
-    cv::dilate(grey, grey, element1);
-    cv::threshold(grey, thresh, 40, 255, cv::THRESH_BINARY);
+    cv::cvtColor(bgr, gray, cv::COLOR_BGR2GRAY);
+
+    // cv::adaptiveThreshold(gray, thresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 21, 5);
+
+    vector<vector<cv::Point>> contours;
+    vector<cv::Vec4i> hierarchy;
+
+    cv::threshold(gray, thresh, 25, 255, cv::THRESH_BINARY);
+
+    cv::dilate(thresh, thresh, 0);
+
+    // cv::findContours(thresh, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+    // int contour_area = 0;
+    // // cout << "afa" << contours.size() << endl;
+    // for (vector<cv::Point> contour : contours)
+    // {
+    //     contour_area += cv::contourArea(contour);
+    //     // cout << "cont" << contour_area << endl;
+    // }
 
     cv::imshow("flow", bgr);
-    cv::imshow("grey", grey);
+    // cv::imshow("gray", gray);
     cv::imshow("frame", frame);
     cv::imshow("thresh", thresh);
 
@@ -89,20 +108,94 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
 
     return changed_pixels;
 }
-void averageMovingDensity(vector<double> &moving_density_list)
+
+int processMotion2(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
 {
-    for (int i = 2; i < moving_density_list.size() - 2; ++i)
-    {
-        moving_density_list[i] = (moving_density_list[i - 2] + moving_density_list[i - 1] + moving_density_list[i] + moving_density_list[i + 1] + moving_density_list[i + 2]) / 5;
-    }
+    // cv::cvtColor(frame, next, cv::COLOR_BGR2GRAY);
+    int erosion_size = 1;
+    cv::Mat element1 = cv::getStructuringElement(cv::MORPH_RECT,
+                                                 cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
+                                                 cv::Point(erosion_size, erosion_size));
+    frame.copyTo(next);
+
+    cv::Mat diff, thresh;
+    cv::absdiff(frame, prvs, diff);
+
+    // vector<vector<cv::Point>> contours;
+    // vector<cv::Vec4i> hierarchy;
+
+    cv::threshold(diff, thresh, 25, 255, cv::THRESH_BINARY);
+    cv::dilate(thresh, thresh, element1);
+
+    // cv::findContours(thresh, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+    // int contour_area = 0;
+    // // cout << "afa" << contours.size() << endl;
+    // for (vector<cv::Point> contour : contours)
+    // {
+    //     contour_area += cv::contourArea(contour);
+    //     // cout << "cont" << contour_area << endl;
+    // }
+
+    // cv::imshow("flow", bgr);
+    // cv::imshow("gray", gray);
+    cv::imshow("frame", frame);
+    cv::imshow("diff", diff);
+    cv::imshow("thresh", thresh);
+
+    cv::waitKey(30);
+    int changed_pixels = cv::countNonZero(thresh);
+
+    return changed_pixels;
 }
+
+int processMotion3(bagSub pBackSub, cv::Mat frame)
+{
+    // cv::cvtColor(frame, next, cv::COLOR_BGR2GRAY);
+    cv::Mat frame1, prvs, fgMask;
+
+    int erosion_size = 2;
+    cv::Mat element1 = cv::getStructuringElement(cv::MORPH_RECT,
+                                                 cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
+                                                 cv::Point(erosion_size, erosion_size));
+    pBackSub->apply(frame, fgMask, 0.9);
+
+    fgMask.copyTo(frame1);
+    cv::Mat thresh;
+    // cv::erode(fgMask, thresh, element1);
+    cv::threshold(frame1, frame1, 25, 255, cv::THRESH_BINARY);
+
+    //
+    cv::dilate(frame1, frame1, element1);
+    // cv::normalize(fgMask, frame1, 0.0f, 1.0f, cv::NORM_MINMAX);
+    // thresh.copyTo(frame1);
+    // double sum = cv::sum(frame1)[0];
+    // cout << sum << " " << counter << endl;
+    int val = cv::countNonZero(frame1);
+    // cout << val << " " << counter << endl;
+
+    cv::imshow("Frame", frame);
+    // cv::imshow("FG Mask", fgMask);
+    cv::imshow("frame2", frame1);
+    cv::waitKey(30);
+    return val;
+}
+// void averageMovingDensity(vector<double> &moving_density_list)
+// {
+//     for (int i = 2; i < moving_density_list.size() - 2; ++i)
+//     {
+//         moving_density_list[i] = (moving_density_list[i - 2] + moving_density_list[i - 1] + moving_density_list[i] + moving_density_list[i + 1] + moving_density_list[i + 2]) / 5;
+//     }
+// }
 
 void calc_density(vector<double> &queue_density_list, vector<double> &moving_density_list, cv::VideoCapture capture, int fast_forward)
 {
     cv::Mat frame, prvs, next;
     capture >> frame;
 
+    vector<double> original_moving_list;
+
     int counter = 0;
+    int index = 0;
 
     cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     prvs = cameraCorrection(frame, scr_pts, dest_pts);
@@ -112,8 +205,11 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
 
     int total_pixels = prvs.rows * prvs.cols;
 
-    bagSub pBackSub;
-    pBackSub = cv::createBackgroundSubtractorMOG2(1500, false);
+    bagSub pBackSub1, pBackSub2;
+    pBackSub1 = cv::createBackgroundSubtractorMOG2();
+    pBackSub2 = cv::createBackgroundSubtractorKNN(40);
+
+    double last_k_sum = 0;
 
     while (true)
     {
@@ -127,20 +223,30 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
         cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
         frame = cameraCorrection(frame, scr_pts, dest_pts);
 
-        int queueSum = processQueue(frame, pBackSub);
-        double queueDensity = (double)queueSum / 255.0 / total_pixels;
-        queue_density_list.push_back(queueDensity);
+        int queueSum = processQueue(frame, pBackSub1);
+        // double queue_density = (double)queueSum / 255.0 / total_pixels;
+        double queue_density = (double)queueSum / total_pixels;
+        queue_density_list.push_back(queue_density);
 
-        int changed_pixels = processMotion(frame, prvs, next);
+        // int changed_pixels = processMotion2(frame, prvs, next);
+        int changed_pixels = processMotion3(pBackSub2, frame);
+
         double moving_density = (double)changed_pixels / total_pixels;
+        original_moving_list.push_back(moving_density);
+        index++;
+
+        if (counter < 30)
+            moving_density = 0;
         moving_density_list.push_back(moving_density);
 
         //  Update the previous frame
-        next.copyTo(prvs);
-        cout << queueDensity << " " << changed_pixels << " " << counter << endl;
+        frame.copyTo(prvs);
+        std::cout << queue_density << " " << moving_density << " " << counter << endl;
+
+        update(queue_density, moving_density);
     }
-    cout << "Voila" << endl;
-    averageMovingDensity(moving_density_list);
+    std::cout << "Voila" << endl;
+    // averageMovingDensity(moving_density_list);
     // cout << queue_density_list;
     // return queue_density_list;
 }

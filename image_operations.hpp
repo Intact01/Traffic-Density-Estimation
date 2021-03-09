@@ -71,7 +71,7 @@ cv::Mat cameraCorrection(cv::Mat original_image, vector_point source_pts, vector
     }
     catch (cv::Exception e)
     {
-        cout << e.what() << endl;
+        std::cout << e.what() << endl;
         return output_image;
     }
     cv::Rect cropRect = getRectFromPoints(destination_pts);

@@ -4,7 +4,6 @@
 #include "arg_parser.hpp"
 #include "image_operations.hpp"
 #include "density.hpp"
-#include "graphs.hpp"
 
 cv::VideoCapture getImageStream(string videoPath)
 {
@@ -29,8 +28,9 @@ int main(int argc, char **argv)
     cv::VideoCapture capture = getImageStream(videoPath);
     vector<double> queue_density_list, moving_density_list;
 
+    initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
     calc_density(queue_density_list, moving_density_list, capture, frameRate);
-
+    // save(imagePath);
     make_graph(queue_density_list, moving_density_list, imagePath, frameRate);
 
     return 0;
