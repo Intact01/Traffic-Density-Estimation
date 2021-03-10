@@ -69,7 +69,7 @@ void update(double queue_density, double moving_density)
         y_data_moving.at<double>(0, array_index) = moving_density;
 
         plot = cv::plot::Plot2d::create(x_data, y_data_queue);
-        // plot->setPlotBackgroundColor(WHITE);
+        
         plot->setPlotLineColor(CYAN);
         plot->setPlotLineWidth(1.5);
         plot->setShowText(false);
@@ -81,7 +81,7 @@ void update(double queue_density, double moving_density)
         cv::moveWindow("Queue Density", 150, 400);
 
         plot = cv::plot::Plot2d::create(x_data, y_data_moving);
-        // plot->setPlotBackgroundColor(WHITE);
+        
         plot->setPlotLineColor(ORANGE);
         plot->setPlotLineWidth(1.5);
         plot->setShowText(false);
