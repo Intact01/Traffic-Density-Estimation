@@ -54,7 +54,6 @@ void make_graph(vector<double> queue_density_list, vector<double> moving_density
     plt::title("Traffic Density Plot");
     // Enable legend.
     plt::legend();
-    // plt::show();
     // Save the image (file format is determined by the extension)
     plt::save(fileName);
 }

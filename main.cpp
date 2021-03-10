@@ -29,9 +29,9 @@ void start(vector_point source_pts = scr_pts)
 
     initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
     calc_density(queue_density_list, moving_density_list, capture, frameRate, source_pts);
-    // save(imagePath);
     make_graph(queue_density_list, moving_density_list, imagePath, frameRate);
 }
+
 // main function
 int main(int argc, char **argv)
 {

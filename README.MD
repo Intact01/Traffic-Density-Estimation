@@ -3,13 +3,14 @@
 ## Part 2 : Plotting Queue and Dynamic Density
 
 
-### Installation and Building (for Ubuntu)
+### Installation and Building (for Ubuntu 20.04 )
 
 ``` bash
 $ sudo apt install libboost-program-options-dev
-$ sudo apt install python3-matplotlib python3-numpy python3.8-dev
+$ sudo apt install python3.8 python3.8-dev python3-matplotlib python3-numpy
 $ make
 ```  
+*** For Older versions of Ubuntu, replace with appropriate versions of python3 in installation and in makefile
 
 ### Executing 
 ``` bash
@@ -31,7 +32,7 @@ $ make clean
 >| ------------- |:-------------:|
 >| -h, --help                     | produce help message |
 >| -f, --file < filepath >    | video filepath      |
->| -r, --framerate < framerate >    | frame rate (fps), *Default : 1*      |
+>| -r, --framerate < framerate >    | frames to skip processing, *Default : 5*      |
 >| -s, --save < filepath >    | path to image of saved graph,  *Default : output.png*   |
 >| -c, --choose                   | enter custom area to crop     | 
 <br/>
@@ -55,6 +56,6 @@ $ make clean
 
 
 ### Libraries Used :
-- **OpenCV** - For image and videi operations.
+- **OpenCV** - For image and video operations and plotting graph in realtime
 - **Boost** - For argument parser
-- **matplotlib** - For plots
+- **matplotlib** - For plotting final graph 

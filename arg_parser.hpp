@@ -18,15 +18,6 @@ const char *choose_section_opt_name = "choose,c";
 
 const string wrong_usage_msg = "Wrong usage: Use -h, --help for help";
 
-// class ArgumentOptions
-// {
-// public:
-//     string videoPath, imagePath;
-//     int frameRate;
-
-//     ArgumentOptions(string videoPath, string imagePath, int frameRate);
-// };
-
 // parses the command line args
 void parse(int argc, char **argv, string &imagePath, string &videoPath, int &frameRate, bool &choose)
 {
@@ -36,7 +27,7 @@ void parse(int argc, char **argv, string &imagePath, string &videoPath, int &fra
         help_opt_name, "produce help message")(
         video_path_opt_name, po::value<string>(&videoPath)->required(), "video path")(
         image_path_opt_name, po::value<string>(&imagePath), "path to image of saved graph")(
-        frame_rate_opt_name, po::value<int>(&frameRate), "frame rate (fps)")(
+        frame_rate_opt_name, po::value<int>(&frameRate), "frames to skip processing")(
         choose_section_opt_name, "enter custom area to crop");
 
     string fileName;
