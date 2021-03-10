@@ -32,7 +32,7 @@ $ make clean
 >| ------------- |:-------------:|
 >| -h, --help                     | produce help message |
 >| -f, --file < filepath >    | video filepath      |
->| -r, --framerate < framerate >    | frames to skip processing, *Default : 5*      |
+>| -r, --frameskip < frameskip >    | frames to skip processing, *Default : 5*      |
 >| -s, --save < filepath >    | path to image of saved graph,  *Default : output.png*   |
 >| -c, --choose                   | enter custom area to crop     | 
 <br/>
@@ -46,16 +46,14 @@ $ make clean
       - Select 4 points in succession on the image using the mouse which will serve as the area of road to focus on, for density calculation.
     -  In the file flag, if the video is not in the same directory then provide the path of the video.
 - ...
-<!-- - A window opens containing the image in grayscale.
-  - Select 4 points in succession on the image using the mouse which will serve as the source coordinates for the transform.
-- A new window opens with the transformed image, with the outline of the rectangle to be cropped. 
-  - The transformed image is obtained by applying a homographic transform of the source points onto the destination points and then selecting the smallest rectangle that contains a part of the actual image.
-  - Press Enter to conform the selection, and Esc. to cancel and exit.
-- On conformation, another window opens containing the cropped image.  -->
+- By default, every 5th frame is processed, but it can be changed with the argument -r
 - Finally the plots of Queue and Dynamic density will be saved in the file given by user or by default in "output.png".
 
 
 ### Libraries Used :
-- **OpenCV** - For image and video operations and plotting graph in realtime
+- **OpenCV** - For image and video operations and plotting graph in realtime 
 - **Boost** - For argument parser
 - **matplotlib** - For plotting final graph 
+- **matplotlib-cpp** - C++ bindings for matplotlib [link](https://github.com/lava/matplotlib-cpp)
+
+

@@ -6,7 +6,7 @@
 #include "density.hpp"
 #include "choice.hpp"
 
-int frameRate;
+int frameskip;
 string videoPath;
 string imagePath;
 
@@ -28,19 +28,19 @@ void start(vector_point source_pts = scr_pts)
     vector<double> queue_density_list, moving_density_list;
 
     initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
-    calc_density(queue_density_list, moving_density_list, capture, frameRate, source_pts);
-    make_graph(queue_density_list, moving_density_list, imagePath, frameRate);
+    calc_density(queue_density_list, moving_density_list, capture, frameskip, source_pts);
+    make_graph(queue_density_list, moving_density_list, imagePath, frameskip);
 }
 
 // main function
 int main(int argc, char **argv)
 {
-    frameRate = 5;
+    frameskip = 5;
     videoPath = "trafficvideo.mp4";
     imagePath = "output.png";
     bool choose = false;
 
-    parse(argc, argv, imagePath, videoPath, frameRate, choose);
+    parse(argc, argv, imagePath, videoPath, frameskip, choose);
 
     if (choose)
     {
