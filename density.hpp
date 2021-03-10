@@ -35,7 +35,7 @@ int processQueue(cv::Mat frame, bagSub pBackSub)
 
     // cv::imshow("Frame", frame);
     // cv::imshow("FG Mask", fgMask);
-    cv::imshow("frame1", frame1);
+    // cv::imshow("frame1", frame1);
 
     int keyboard = cv::waitKey(30);
     // if (keyboard == 'q' || keyboard == 27)
@@ -90,7 +90,7 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
 
     cv::threshold(gray, thresh, 25, 255, cv::THRESH_BINARY);
 
-    cv::imshow("thresh0", thresh);
+    // cv::imshow("thresh0", thresh);
 
     cv::dilate(thresh, thresh, element1);
 
@@ -103,10 +103,10 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     //     // cout << "cont" << contour_area << endl;
     // }
 
-    cv::imshow("flow", bgr);
+    // cv::imshow("flow", bgr);
     // cv::imshow("gray", gray);
-    cv::imshow("frame", frame);
-    cv::imshow("thresh", thresh);
+    // cv::imshow("frame", frame);
+    // cv::imshow("thresh", thresh);
 
     cv::waitKey(30);
     int changed_pixels = cv::countNonZero(thresh);
@@ -143,9 +143,9 @@ int processMotion2(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
 
     // cv::imshow("flow", bgr);
     // cv::imshow("gray", gray);
-    cv::imshow("frame", frame);
-    cv::imshow("diff", diff);
-    cv::imshow("thresh", thresh);
+    // cv::imshow("frame", frame);
+    // cv::imshow("diff", diff);
+    // cv::imshow("thresh", thresh);
 
     cv::waitKey(30);
     int changed_pixels = cv::countNonZero(thresh);
@@ -178,9 +178,9 @@ int processMotion3(bagSub pBackSub, cv::Mat frame)
     int val = cv::countNonZero(frame1);
     // cout << val << " " << counter << endl;
 
-    cv::imshow("Frame", frame);
+    // cv::imshow("Frame", frame);
     // cv::imshow("FG Mask", fgMask);
-    cv::imshow("frame2", frame1);
+    // cv::imshow("frame2", frame1);
     cv::waitKey(30);
     return val;
 }
@@ -244,7 +244,7 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
         if (counter < 30)
             moving_density = 0;
         moving_density_list.push_back(moving_density);
-
+        imshow("Frame", frame);
         //  Update the previous frame
         frame.copyTo(prvs);
         std::cout << queue_density << " " << moving_density << " " << counter << endl;
