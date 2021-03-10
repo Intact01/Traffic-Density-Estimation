@@ -1,5 +1,6 @@
 #include "matplotlibcpp.h"
 #include <opencv2/plot.hpp>
+#include <opencv2/opencv.hpp>
 
 using namespace std;
 namespace plt = matplotlibcpp;
@@ -69,18 +70,26 @@ void update(double queue_density, double moving_density)
         y_data_moving.at<double>(0, array_index) = moving_density;
 
         plot = cv::plot::Plot2d::create(x_data, y_data_queue);
+        // plot->setPlotBackgroundColor(WHITE);
+        plot->setPlotLineColor(CYAN);
+        plot->setPlotLineWidth(1.5);
         plot->setShowText(false);
         plot->setShowGrid(false);
         plot->setInvertOrientation(true);
         plot->render(plot_result);
-        imshow("plot 1", plot_result);
+
+        imshow("Queue Density", plot_result);
 
         plot = cv::plot::Plot2d::create(x_data, y_data_moving);
+        // plot->setPlotBackgroundColor(WHITE);
+        plot->setPlotLineColor(ORANGE);
+        plot->setPlotLineWidth(1.5);
         plot->setShowText(false);
         plot->setShowGrid(false);
         plot->setInvertOrientation(true);
         plot->render(plot_result);
-        imshow("plot 2", plot_result);
+
+        imshow("Dynamic Density", plot_result);
 
         cv::waitKey(30);
     }

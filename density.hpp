@@ -39,7 +39,7 @@ int processQueue(cv::Mat frame, bagSub pBackSub)
 
     // cv::imshow("Frame", frame);
     // cv::imshow("FG Mask", fgMask);
-    cv::imshow("frame1", frame1);
+    // cv::imshow("frame1", frame1);
 
     int keyboard = cv::waitKey(30);
     // if (keyboard == 'q' || keyboard == 27)
@@ -112,10 +112,10 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     //     // cout << "cont" << contour_area << endl;
     // }
 
-    cv::imshow("flow", bgr);
-    cv::imshow("hsv", hsv8);
-    cv::imshow("frame", frame);
-    cv::imshow("thresh", thresh);
+    // cv::imshow("flow", bgr);
+    // cv::imshow("gray", gray);
+    // cv::imshow("frame", frame);
+    // cv::imshow("thresh", thresh);
 
     cv::waitKey(30);
     int changed_pixels = cv::countNonZero(thresh);
@@ -152,9 +152,9 @@ int processMotion2(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
 
     // cv::imshow("flow", bgr);
     // cv::imshow("gray", gray);
-    cv::imshow("frame", frame);
-    cv::imshow("diff", diff);
-    cv::imshow("thresh", thresh);
+    // cv::imshow("frame", frame);
+    // cv::imshow("diff", diff);
+    // cv::imshow("thresh", thresh);
 
     cv::waitKey(30);
     int changed_pixels = cv::countNonZero(thresh);
@@ -187,9 +187,9 @@ int processMotion3(bagSub pBackSub, cv::Mat frame)
     int val = cv::countNonZero(frame1);
     // cout << val << " " << counter << endl;
 
-    cv::imshow("Frame", frame);
+    // cv::imshow("Frame", frame);
     // cv::imshow("FG Mask", fgMask);
-    cv::imshow("frame2", frame1);
+    // cv::imshow("frame2", frame1);
     cv::waitKey(30);
     return val;
 }
@@ -258,6 +258,8 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
         //     moving_density = 0;
         double actual_density = last_k_sum / k;
         moving_density_list.push_back(actual_density);
+
+        imshow("Frame", frame);
 
         //  Update the previous frame
         frame.copyTo(prvs);
