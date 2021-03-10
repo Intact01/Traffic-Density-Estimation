@@ -22,10 +22,14 @@ int processQueue(cv::Mat frame, bagSub pBackSub)
     cv::Mat thresh;
     cv::erode(fgMask, thresh, element2);
     cv::dilate(frame1, frame1, element2);
-
-    cv::threshold(frame1, frame1, 127, 255, cv::THRESH_BINARY);
-    //
+    cv::erode(fgMask, thresh, element2);
     cv::dilate(frame1, frame1, element2);
+
+    cv::dilate(frame1, frame1, element2);
+
+    cv::threshold(frame1, frame1, 127, 255, cv::THRESH_TRIANGLE);
+    //
+    // cv::dilate(frame1, frame1, element2);
     // cv::normalize(fgMask, frame1, 0.0f, 1.0f, cv::NORM_MINMAX);
     // thresh.copyTo(frame1);
     // double sum = cv::sum(frame1)[0];
@@ -52,9 +56,6 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     cv::Mat element1 = cv::getStructuringElement(cv::MORPH_RECT,
                                                  cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
                                                  cv::Point(erosion_size, erosion_size));
-    // cv::imshow("prvs", prvs);
-    // cv::imshow("next", next);
-    // cv::waitKey(0);
     cv::Mat flow(prvs.size(), CV_32FC2);
     cv::calcOpticalFlowFarneback(prvs, next, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
 
@@ -78,7 +79,14 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     cv::merge(_hsv, 3, hsv);
     hsv.convertTo(hsv8, CV_8U, 255.0);
 
-    cv::medianBlur(hsv8, hsv8, 5);
+    // cv::medianBlur(hsv8, hsv8, 3);
+
+    // cv::dilate(hsv8, hsv8, element1);
+    // cv::erode(hsv8, hsv8, element1);
+    // cv::dilate(hsv8, hsv8, element1);
+    // cv::erode(hsv8, hsv8, element1);
+
+    // cv::dilate(hsv8, hsv8, element1);
 
     cv::cvtColor(hsv8, bgr, cv::COLOR_HSV2BGR);
     cv::cvtColor(bgr, gray, cv::COLOR_BGR2GRAY);
@@ -88,9 +96,9 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     vector<vector<cv::Point>> contours;
     vector<cv::Vec4i> hierarchy;
 
-    cv::threshold(gray, thresh, 25, 255, cv::THRESH_BINARY);
+    cv::threshold(gray, thresh, 255, 255, cv::THRESH_TRIANGLE);
 
-    cv::imshow("thresh0", thresh);
+    // cv::imshow("thresh0", thresh);
 
     cv::dilate(thresh, thresh, element1);
 
@@ -104,7 +112,7 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     // }
 
     cv::imshow("flow", bgr);
-    // cv::imshow("gray", gray);
+    cv::imshow("hsv", hsv8);
     cv::imshow("frame", frame);
     cv::imshow("thresh", thresh);
 
@@ -194,7 +202,6 @@ void averageMovingDensity(vector<double> &moving_density_list)
 
 void calc_density(vector<double> &queue_density_list, vector<double> &moving_density_list, cv::VideoCapture capture, int fast_forward, vector_point source_points)
 {
-    cout << "in calc density";
     cv::Mat frame, prvs, next;
     capture >> frame;
 
@@ -251,8 +258,8 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
 
         update(queue_density, moving_density);
     }
-    std::cout << "Voila" << endl;
-    averageMovingDensity(moving_density_list);
+    std::cout << "Generating final graph... Please Wait" << endl;
+    // averageMovingDensity(moving_density_list);
     // cout << queue_density_list;
     // return queue_density_list;
 }
