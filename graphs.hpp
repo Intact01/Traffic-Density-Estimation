@@ -77,7 +77,8 @@ void update(double queue_density, double moving_density)
         plot->setInvertOrientation(true);
         plot->render(plot_result);
 
-        imshow("Queue Density", plot_result);
+        cv::imshow("Queue Density", plot_result);
+        cv::moveWindow("Queue Density", 150, 400);
 
         plot = cv::plot::Plot2d::create(x_data, y_data_moving);
         // plot->setPlotBackgroundColor(WHITE);
@@ -88,7 +89,8 @@ void update(double queue_density, double moving_density)
         plot->setInvertOrientation(true);
         plot->render(plot_result);
 
-        imshow("Dynamic Density", plot_result);
+        cv::imshow("Dynamic Density", plot_result);
+        cv::moveWindow("Dynamic Density", 1200, 400);
 
         cv::waitKey(30);
     }

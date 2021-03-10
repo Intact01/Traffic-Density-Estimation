@@ -17,6 +17,8 @@ void getCustomPoints(void (*main_callback)(vector_point))
     cache_image = source_image.clone();
     cv::imshow("selection", source_image);
     cv::setMouseCallback("selection", mouse_callback);
+    cv::moveWindow("selection", 0, 0);
+
     processImage = main_callback;
     cv::waitKey(0);
 }
@@ -38,12 +40,14 @@ void mouse_callback(int event, int x, int y, int flag, void *param)
             //display circle at clicked point
             cv::circle(source_image, newpt, 5, green, 2, 8, 0);
             cv::imshow("selection", source_image);
+            cv::moveWindow("selection", 0, 0);
         }
         if (points_selected > 1 && points_selected <= 4)
         {
             // join clicked point with previously clicked point
             cv::line(source_image, source_points[points_selected - 2], source_points[points_selected - 1], green, 2, 8, 0);
             cv::imshow("selection", source_image);
+            cv::moveWindow("selection", 0, 0);
         }
 
         cout << x << " " << y << endl;
@@ -66,6 +70,7 @@ void mouse_callback(int event, int x, int y, int flag, void *param)
             source_image.copyTo(cache_image);
             cv::line(cache_image, source_points[points_selected - 1], newpt, green, 2, 8, 0);
             cv::imshow("selection", cache_image);
+            cv::moveWindow("selection", 0, 0);
         }
     }
 }
