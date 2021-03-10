@@ -48,8 +48,6 @@ void make_graph(vector<double> queue_density_list, vector<double> moving_density
 
     plt::named_plot("Moving Density", time, moving_density_list);
 
-    std::cout << queue_density_list.size() << " " << moving_density_list.size() << endl;
-
     plt::xlim(0, (int)moving_density_list.size() * frameRate / 15);
     // Add graph title
     plt::title("Traffic Density Plot");

@@ -24,7 +24,6 @@ cv::VideoCapture getImageStream(string videoPath)
 
 void start(vector_point source_pts = scr_pts)
 {
-    cout << "in start" << endl;
     cv::VideoCapture capture = getImageStream(videoPath);
     vector<double> queue_density_list, moving_density_list;
 

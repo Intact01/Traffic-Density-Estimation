@@ -27,7 +27,7 @@ int processQueue(cv::Mat frame, bagSub pBackSub)
 
     cv::dilate(frame1, frame1, element2);
 
-    cv::threshold(frame1, frame1, 127, 255, cv::THRESH_TRIANGLE);
+    cv::threshold(frame1, frame1, 127, 255, cv::THRESH_BINARY);
     //
     // cv::dilate(frame1, frame1, element2);
     // cv::normalize(fgMask, frame1, 0.0f, 1.0f, cv::NORM_MINMAX);
@@ -96,10 +96,11 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     vector<vector<cv::Point>> contours;
     vector<cv::Vec4i> hierarchy;
 
-    cv::threshold(gray, thresh, 255, 255, cv::THRESH_TRIANGLE);
+    cv::threshold(gray, thresh, 127, 255, cv::THRESH_TRIANGLE);
 
     // cv::imshow("thresh0", thresh);
 
+    cv::erode(thresh, thresh, element1);
     cv::dilate(thresh, thresh, element1);
 
     // cv::findContours(thresh, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
@@ -223,6 +224,7 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
     pBackSub2 = cv::createBackgroundSubtractorKNN(40);
 
     double last_k_sum = 0;
+    int k = 5;
 
     while (true)
     {
@@ -248,15 +250,20 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
         original_moving_list.push_back(moving_density);
         index++;
 
-        if (counter < 30)
-            moving_density = 0;
-        moving_density_list.push_back(moving_density);
+        last_k_sum += moving_density;
+        if (index > k)
+            last_k_sum -= original_moving_list[index - k];
+
+        // if (counter < 30)
+        //     moving_density = 0;
+        double actual_density = last_k_sum / k;
+        moving_density_list.push_back(actual_density);
 
         //  Update the previous frame
         frame.copyTo(prvs);
-        std::cout << queue_density << " " << moving_density << " " << counter << endl;
+        std::cout << left << setw(10) << double(counter) / 15 << left << setw(10) << queue_density << left << setw(10) << moving_density << endl;
 
-        update(queue_density, moving_density);
+        update(queue_density, actual_density);
     }
     std::cout << "Generating final graph... Please Wait" << endl;
     // averageMovingDensity(moving_density_list);

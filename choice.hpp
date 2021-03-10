@@ -49,6 +49,7 @@ void mouse_callback(int event, int x, int y, int flag, void *param)
         cout << x << " " << y << endl;
         if (points_selected == 4)
         {
+            std::cout << "==============" << '\n';
             cv::destroyWindow("selection");
             processImage(source_points);
             cv::destroyAllWindows();
