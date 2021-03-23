@@ -1,42 +1,30 @@
-all: build
+CC		= g++
+C_FLAGS = -g 
 
-build :
-	g++ main.cpp -I/usr/include/python3.8 -lpython3.8 -lboost_program_options -o main.out -std=c++11 `pkg-config --cflags --libs opencv`
-testrun : main.out
-	./main.out -f empty
-test:
-	g++ test.cpp -I/usr/include/python3.8 -lpython3.8 -lboost_program_options -o test.out -std=c++11 `pkg-config --cflags --libs opencv`
-clean :
-	rm main.out
-
-
-# CC		= g++
-# C_FLAGS = -g -Wall
-
-# BIN		= bin
-# SRCS	= src/*.cpp
-# PROG = bin/main
-# SRC = src
-# INCLUDE	:= include
-# LIB		:= lib
+BIN		= bin
+SRCS	= src/*.cpp
+PROG = bin/main
+SRC = src
+INCLUDE	:= /usr/include/python3.8
+LIB		:= -lpython3.8 -lboost_program_options
 
 
-# OPENCV = `pkg-config opencv --cflags --libs`
-# LIBS = $(OPENCV)
+OPENCV = `pkg-config opencv --cflags --libs`
+LIBS = $(OPENCV)
 
-# # EXECUTABLE	:= main
+# EXECUTABLE	:= main
 
-# # $(PROG):$(SRCS)
-# # 	$(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(LIBS)
+# $(PROG):$(SRCS)
+# 	$(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(LIBS)
 	
-# EXECUTABLE = main
-# all: $(BIN)/$(EXECUTABLE)
+EXECUTABLE = main
+all: $(BIN)/$(EXECUTABLE)
 
-# clean:
-# 	$(RM) $(BIN)/$(EXECUTABLE)
+clean:
+	$(RM) $(BIN)/$(EXECUTABLE)
 
-# run: all
-# 	./$(BIN)/$(EXECUTABLE)
+run: all
+	./$(BIN)/$(EXECUTABLE)
 
-# $(BIN)/$(EXECUTABLE): $(SRC)/*.cpp
-# 	$(CC) $(C_FLAGS) -I$(INCLUDE) -L$(LIB) $^ -o $@ $(LIBS)
+$(BIN)/$(EXECUTABLE): $(SRC)/*.cpp
+	$(CC) $^ -o $@ $(C_FLAGS) -I$(INCLUDE) $(LIB) $(LIBS)

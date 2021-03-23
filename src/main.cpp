@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <string>
 #include <fstream>
 
 #include "arg_parser.hpp"
@@ -23,6 +24,20 @@ cv::VideoCapture getImageStream(string videoPath)
     return capture;
 }
 
+void make_csv(vector<double> queue_density_list, vector<double> moving_density_list)
+{
+    string comma = ",";
+    fstream fout;
+    fout.open("output/density.csv", ios::out);
+    fout << "Frame" << comma << "Queue Density" << comma << "Moving Static" << endl;
+
+    for (int i = 0; i < queue_density_list.size(); i++)
+    {
+        fout << i << comma << queue_density_list[i] << comma << moving_density_list[i] << endl;
+    }
+    fout.close();
+}
+
 void start(vector_point source_pts = scr_pts)
 {
     cv::VideoCapture capture = getImageStream(videoPath);
@@ -31,6 +46,8 @@ void start(vector_point source_pts = scr_pts)
     initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
     calc_density(queue_density_list, moving_density_list, capture, frameskip, source_pts);
     make_graph(queue_density_list, moving_density_list, imagePath, frameskip);
+
+    make_csv(queue_density_list, moving_density_list);
 }
 bool hasEnding(std::string const &fileName, std::string const &extension)
 {
@@ -47,8 +64,8 @@ bool hasEnding(std::string const &fileName, std::string const &extension)
 int main(int argc, char **argv)
 {
     frameskip = 5;
-    videoPath = "trafficvideo.mp4";
-    imagePath = "output.png";
+    videoPath = "input/trafficvideo.mp4";
+    imagePath = "output/output.png";
     bool choose = false;
 
     parse(argc, argv, imagePath, videoPath, frameskip, choose);

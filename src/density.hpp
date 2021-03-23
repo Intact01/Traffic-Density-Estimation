@@ -31,7 +31,7 @@ int processQueue(cv::Mat frame, bagSub pBackSub)
 
     cv::dilate(frame1, frame1, element2);
 
-    // count pixels only greater than 127 
+    // count pixels only greater than 127
     cv::threshold(frame1, frame1, 127, 255, cv::THRESH_BINARY);
     int val = cv::countNonZero(frame1);
 
@@ -39,7 +39,7 @@ int processQueue(cv::Mat frame, bagSub pBackSub)
     return val;
 }
 
-// calculate motion density with optical flow 
+// calculate motion density with optical flow
 int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
 {
     // copy frame to next
@@ -54,7 +54,6 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     cv::Mat flow(prvs.size(), CV_32FC2);
     cv::calcOpticalFlowFarneback(prvs, next, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
 
-    
     cv::Mat flow_parts[2];
     split(flow, flow_parts);
 
@@ -79,7 +78,7 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     // keep pixels only greater than 127
     cv::threshold(gray, thresh, 127, 255, cv::THRESH_TRIANGLE);
 
-    // errode and dilate to fill the holes 
+    // errode and dilate to fill the holes
     cv::erode(thresh, thresh, element1);
     cv::dilate(thresh, thresh, element1);
 
@@ -88,56 +87,11 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
     return changed_pixels;
 }
 
-// calculate motion density with background subtraction
-int processMotion2(cv::Mat frame, cv::Mat prvs, cv::Mat &next)
-{
-    int erosion_size = 1;
-
-    cv::Mat element1 = cv::getStructuringElement(cv::MORPH_RECT,
-                                                 cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
-                                                 cv::Point(erosion_size, erosion_size));
-    frame.copyTo(next);
-
-    cv::Mat diff, thresh;
-    cv::absdiff(frame, prvs, diff);
-
-    cv::threshold(diff, thresh, 25, 255, cv::THRESH_BINARY);
-    cv::dilate(thresh, thresh, element1);
-
-    cv::waitKey(30);
-    int changed_pixels = cv::countNonZero(thresh);
-
-    return changed_pixels;
-}
-
-// calculate motion density with successive drames' pixel difference
-int processMotion3(bagSub pBackSub, cv::Mat frame)
-{
-    cv::Mat frame1, prvs, fgMask;
-    // create the structuring element that can be further passed to dilate
-    int erosion_size = 2;
-    cv::Mat element1 = cv::getStructuringElement(cv::MORPH_RECT,
-                                                 cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
-                                             cv::Point(erosion_size, erosion_size));
-    pBackSub->apply(frame, fgMask, 0.9);
-    fgMask.copyTo(frame1);
-
-    // keep pixels only greater than 25
-    cv::Mat thresh;
-    cv::threshold(frame1, frame1, 25, 255, cv::THRESH_BINARY);
-
-    cv::dilate(frame1, frame1, element1);
-    int val = cv::countNonZero(frame1);
-
-    cv::waitKey(30);
-    return val;
-}
-
-// for density calculation 
+// for density calculation
 void calc_density(vector<double> &queue_density_list, vector<double> &moving_density_list, cv::VideoCapture capture, int fast_forward, vector_point source_points)
 {
     cv::Mat frame, prvs, next;
-    capture >> frame;   // capture the first frame
+    capture >> frame; // capture the first frame
 
     vector<double> original_moving_list;
 
@@ -150,16 +104,16 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
     int total_pixels = prvs.rows * prvs.cols;
 
     bagSub pBackSub1, pBackSub2;
-    pBackSub1 = cv::createBackgroundSubtractorMOG2();   // to create background subtractor
-    pBackSub2 = cv::createBackgroundSubtractorKNN(40);  // to create background subtractor using starting 40 frames
+    pBackSub1 = cv::createBackgroundSubtractorMOG2();  // to create background subtractor
+    pBackSub2 = cv::createBackgroundSubtractorKNN(40); // to create background subtractor using starting 40 frames
 
     double last_k_sum = 0;
     int k = 5;
 
     while (true)
-    {  
+    {
         counter++;
-        capture >> frame;  // capture next frame
+        capture >> frame; // capture next frame
 
         if (counter % fast_forward != 0)
             continue;
@@ -175,7 +129,7 @@ void calc_density(vector<double> &queue_density_list, vector<double> &moving_den
         double queue_density = (double)queueSum / total_pixels;
         queue_density_list.push_back(queue_density);
 
-        // update original motion density list 
+        // update original motion density list
         int changed_pixels = processMotion(frame, prvs, next);
         double moving_density = (double)changed_pixels / total_pixels;
         original_moving_list.push_back(moving_density);
