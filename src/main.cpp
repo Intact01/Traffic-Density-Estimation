@@ -1,16 +1,15 @@
-#include <iostream>
-#include <cmath>
-#include <string>
-#include <fstream>
+#include <bits/stdc++.h>
 
 #include "arg_parser.hpp"
 #include "image_operations.hpp"
 #include "density.hpp"
 #include "choice.hpp"
+#include "parameters.hpp"
 
 int frameskip;
 string videoPath;
 string imagePath;
+Parameters parameters;
 
 cv::VideoCapture getImageStream(string videoPath)
 {
@@ -44,7 +43,11 @@ void start(vector_point source_pts = scr_pts)
     vector<double> queue_density_list, moving_density_list;
 
     initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
+
+    parameters.initialize();
     calc_density(queue_density_list, moving_density_list, capture, frameskip, source_pts);
+    parameters.complete();
+
     make_graph(queue_density_list, moving_density_list, imagePath, frameskip);
 
     make_csv(queue_density_list, moving_density_list);
@@ -67,6 +70,7 @@ int main(int argc, char **argv)
     videoPath = "input/trafficvideo.mp4";
     imagePath = "output/output.png";
     bool choose = false;
+    parameters = Parameters();
 
     parse(argc, argv, imagePath, videoPath, frameskip, choose);
 
@@ -90,6 +94,8 @@ int main(int argc, char **argv)
     {
         start();
     }
+
+    cout << "time elapsed: " << parameters.get_time_elapsed() << endl;
 
     return 0;
 }
