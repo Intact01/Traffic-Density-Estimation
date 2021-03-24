@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 
+#include "utility.hpp"
 #include "arg_parser.hpp"
 #include "image_operations.hpp"
 #include "density.hpp"
@@ -46,8 +47,10 @@ void start(vector_point source_pts = scr_pts)
     initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
     calc_density(queue_density_list, moving_density_list, capture, frameskip, source_pts);
     make_graph(queue_density_list, moving_density_list, imagePath, frameskip);
-
-    make_csv(queue_density_list, moving_density_list);
+    double utility_queue = find_utility_qd(queue_density_list, frameskip);
+    // double utility_moving = find_utility_qd(queue_density_list, frameskip);
+    cout<<utility_queue<<endl;
+    //make_csv(queue_density_list, moving_density_list);
 }
 bool hasEnding(std::string const &fileName, std::string const &extension)
 {
