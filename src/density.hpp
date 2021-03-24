@@ -1,9 +1,9 @@
 #pragma once
 #include <iostream>
 
-#include "properties.hpp"
 #include "graphs.hpp"
-
+#include "image_operations.hpp"
+#include "properties.hpp"
 
 typedef cv::Ptr<cv::BackgroundSubtractor> bagSub;
 

@@ -1,11 +1,11 @@
 #include <bits/stdc++.h>
 
-#include "utility.hpp"
 #include "arg_parser.hpp"
-#include "image_operations.hpp"
-#include "density.hpp"
 #include "choice.hpp"
+#include "density.hpp"
+#include "image_operations.hpp"
 #include "parameters.hpp"
+#include "utility.hpp"
 
 int frameskip;
 string videoPath;
@@ -70,9 +70,11 @@ int main(int argc, char **argv) {
   videoPath = "input/trafficvideo.mp4";
   imagePath = "output/output.png";
   bool choose = false;
+  int method = 0;
+
   parameters = Parameters();
 
-  parse(argc, argv, imagePath, videoPath, frameskip, choose);
+  parse(argc, argv, imagePath, videoPath, frameskip, choose, method);
 
   std::ifstream file(videoPath);
   if (!file.is_open()) {
