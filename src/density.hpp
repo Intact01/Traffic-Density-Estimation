@@ -258,3 +258,73 @@ void method4(vector<double> &queue_density_list, cv::VideoCapture capture, vecto
   queue_density_list = qd_list;
   return;
 }
+void method0(vector<double> &queue_density_list, cv::VideoCapture capture, vector_point source_points, int fast_forward = 1){
+  cv::Mat frame;
+  capture >> frame;  // capture the first frame
+
+
+  int counter = 0;
+  cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+  frame = cameraCorrection(frame, source_points, dest_pts);
+  int total_pixels = frame.rows * frame.cols;
+  cout<<total_pixels<<endl;
+  bagSub pBackSub1;
+  pBackSub1 =
+      cv::createBackgroundSubtractorMOG2();  // to create background subtractor
+
+
+  while (true) {
+    counter++;
+    capture >> frame;  // capture next frame
+
+    if (counter % fast_forward != 0) continue;
+    if (frame.empty()) break;
+
+    // convert to greyscale and correct the camera angle
+    cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    frame = cameraCorrection(frame, source_points, dest_pts);
+    // update queue density list
+    int queueSum = processQueue(frame, pBackSub1);
+    double queue_density = (double)queueSum / total_pixels;
+    queue_density_list.push_back(queue_density);
+
+    std::cout << left << setw(10) << (counter) << left << setw(10)
+              << queue_density << left << endl;
+  }
+}
+
+void method2(vector<double> &queue_density_list, cv::VideoCapture capture, vector_point source_points, int width= 176, int height = 144){
+  cv::Mat frame;
+  capture >> frame;  // capture the first frame
+
+
+  int counter = 0;
+  cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+  frame = cameraCorrection(frame, source_points, dest_pts);
+  resize(frame, frame, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
+  int total_pixels = frame.rows * frame.cols;
+  cout<<total_pixels<<endl;
+  bagSub pBackSub1;
+  pBackSub1 =
+      cv::createBackgroundSubtractorMOG2();  // to create background subtractor
+  while (true) {
+    counter++;
+    capture >> frame;  // capture next frame
+
+    if (frame.empty()) break;
+    
+    // convert to greyscale and correct the camera angle
+    cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    frame = cameraCorrection(frame, source_points, dest_pts);
+    resize(frame, frame, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
+    imshow("method2",frame);
+    cv::waitKey(10);
+    // update queue density list
+    int queueSum = processQueue(frame, pBackSub1);
+    double queue_density = (double)queueSum / total_pixels;
+    queue_density_list.push_back(queue_density);
+
+     std::cout << (counter) << queue_density << endl;
+  }
+}
+
