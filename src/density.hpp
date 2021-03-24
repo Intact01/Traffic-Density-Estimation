@@ -1,12 +1,23 @@
 #pragma once
 #include <iostream>
+#include<pthread.h>
 
+#include "image_operations.hpp"
 #include "properties.hpp"
 #include "graphs.hpp"
 
-
+#define NUM_THREADS 5
 typedef cv::Ptr<cv::BackgroundSubtractor> bagSub;
 
+vector<double> qd_list;
+vector_point src_pts;
+int total_pixels = -1;
+vector<cv::Mat> frames;
+bagSub pBSub;
+// struct thread4_args{
+//   bagSub pBackSub;
+//   int rem;
+// };
 // calculate queue density
 int processQueue(cv::Mat frame, bagSub pBackSub) {
   cv::Mat frame1, prvs, fgMask;
@@ -151,4 +162,99 @@ void calc_density(vector<double> &queue_density_list,
     update(queue_density, actual_density);
   }
   std::cout << "Generating final graph... Please Wait" << endl;
+}
+
+
+void *threading_frames(void *arguments){
+  // struct thread4_args *args = (struct thread4_args *)arguments;
+  // int rem = args -> rem;
+  // cout<<rem<<endl;
+  // bagSub pBackSub = args -> pBackSub;
+  cv::Mat frame;
+  int* rem = (int *)arguments;
+  // while(cap.grab()){
+  //   cout<<"grabbed"<<endl;
+  //   if ((int) cap.get(cv::CAP_PROP_POS_FRAMES) % NUM_THREADS == rem && cap.get(cv::CAP_PROP_POS_FRAMES) != 0){
+  //     cout<<cap.get(cv::CAP_PROP_POS_FRAMES)<<endl;
+  //     cap.retrieve(frame);
+  //     cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+  //     frame = cameraCorrection(frame, src_pts, dest_pts);
+  //     int queueSum = processQueue(frame, pBackSub);
+  //     if(total_pixels == -1){
+  //       total_pixels = frame.rows * frame.cols;
+  //     }
+  //     double queue_density = (double)queueSum / total_pixels;
+  //     qd_list[cap.get(cv::CAP_PROP_POS_FRAMES)-1] = queue_density;
+  //   }
+  // }
+  for(int i = *rem; i<frames.size(); i+=NUM_THREADS){
+    frames[i].copyTo(frame);
+    // imshow("thread "+to_string(*rem), frame);
+    // cv::waitKey(10);
+    cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    frame = cameraCorrection(frame, src_pts, dest_pts);
+    int queueSum = processQueue(frame, pBSub);
+    if(total_pixels == -1){
+      total_pixels = frame.rows * frame.cols;
+    }
+    double queue_density = (double)queueSum / total_pixels;
+    qd_list[i] = queue_density;
+    cout<<i<<" "<<qd_list[i]<<endl;
+  }
+  return NULL;
+}
+
+void method4(vector<double> &queue_density_list, cv::VideoCapture capture, vector_point source_points){
+  pthread_t threads[NUM_THREADS];
+  pthread_attr_t attr;
+  // void *status;
+  // pthread_attr_init(&attr);
+  // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+  int td[NUM_THREADS];
+  pBSub =
+      cv::createBackgroundSubtractorMOG2(); 
+  qd_list = queue_density_list;
+  qd_list.resize(capture.get(cv::CAP_PROP_FRAME_COUNT) -1);
+  src_pts = source_points;
+  cv::Mat frame;
+  capture.set(cv::CAP_PROP_FORMAT, CV_32F);
+  capture>>frame;
+  int counter =0;
+  while(true){
+    capture>>frame;
+    
+    if(frame.empty()){
+      break;
+    }
+    // if(counter<500){
+    //   cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    //   frame = cameraCorrection(frame, src_pts, dest_pts);
+    //   int queueSum = processQueue(frame, pBSub);
+    //   if(total_pixels == -1){
+    //     total_pixels = frame.rows * frame.cols;
+    //   }
+    //   double queue_density = (double)queueSum / total_pixels;
+    //   qd_list[counter] = queue_density;
+    //   cout<<counter<<" "<<qd_list[counter]<<endl;
+    //   counter++;
+    // }
+    frames.push_back(frame);
+  }
+  for (int i=0; i<NUM_THREADS; i++){
+    // td[i].pBackSub = pBackSub1;
+    // td[i].rem = i;
+    td[i] =i;
+    cout<<"create thread "<<i<<endl;
+    int rc = pthread_create(&threads[i], NULL, threading_frames, (void *)&td[i]);
+    if (rc) {
+         cout << "Error:unable to create thread," << rc << endl;
+         exit(-1);
+      }
+  }
+  for (int i=0; i<NUM_THREADS; i++){
+    pthread_join(threads[i], NULL);
+  }
+  cout<<"done"<<endl;
+  queue_density_list = qd_list;
+  return;
 }
