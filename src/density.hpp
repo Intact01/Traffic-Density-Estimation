@@ -293,15 +293,26 @@ void method0(vector<double> &queue_density_list, cv::VideoCapture capture, vecto
   }
 }
 
-void method2(vector<double> &queue_density_list, cv::VideoCapture capture, vector_point source_points, int width= 176, int height = 144){
+void method2(vector<double> &queue_density_list, cv::VideoCapture capture, vector_point source_points, int width=480 , int height = 360){
   cv::Mat frame;
   capture >> frame;  // capture the first frame
 
-
   int counter = 0;
+  for(int i=0; i<4;i++){
+    cv::Point2f pt;
+    pt = dest_pts[i];
+    pt.x = pt.x*width/frame.size().width;
+    pt.y = pt.y*height/frame.size().height;
+    dest_pts[i] = pt;
+
+    pt = source_points[i];
+    pt.x = pt.x*width/frame.size().width;
+    pt.y = pt.y*height/frame.size().height;
+    source_points[i] = pt;
+  }
+  resize(frame, frame, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
   cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
   frame = cameraCorrection(frame, source_points, dest_pts);
-  resize(frame, frame, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
   int total_pixels = frame.rows * frame.cols;
   cout<<total_pixels<<endl;
   bagSub pBackSub1;
@@ -312,19 +323,16 @@ void method2(vector<double> &queue_density_list, cv::VideoCapture capture, vecto
     capture >> frame;  // capture next frame
 
     if (frame.empty()) break;
-    
+    resize(frame, frame, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
     // convert to greyscale and correct the camera angle
     cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     frame = cameraCorrection(frame, source_points, dest_pts);
-    resize(frame, frame, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
-    imshow("method2",frame);
-    cv::waitKey(10);
     // update queue density list
     int queueSum = processQueue(frame, pBackSub1);
     double queue_density = (double)queueSum / total_pixels;
     queue_density_list.push_back(queue_density);
 
-     std::cout << (counter) << queue_density << endl;
+    //std::cout << (counter) <<" "<< queue_density << endl;
   }
 }
 
