@@ -12,6 +12,9 @@ string videoPath;
 string imagePath;
 Parameters parameters;
 
+int method = 0;
+int num_threads = 5;
+
 cv::VideoCapture getImageStream(string videoPath) {
   cv::VideoCapture capture(videoPath);
 
@@ -44,16 +47,19 @@ void start(vector_point source_pts = scr_pts) {
   initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
 
   parameters.initialize();
-  //calc_density(queue_density_list, moving_density_list, capture, frameskip, source_pts);
-  method2(queue_density_list, capture, source_pts);
+  // calc_density(queue_density_list, moving_density_list, capture, frameskip,
+  // source_pts);
+  // method4(queue_density_list, capture, source_pts, num_threads);
+  method0(queue_density_list, capture, source_pts);
+
   parameters.complete();
 
   cout << " queue density : " << queue_density_list.size() << endl;
-  for(int i=0;i<10;i++){
-    cout<<queue_density_list[i]<<endl;
+  for (int i = 0; i < 10; i++) {
+    cout << queue_density_list[i] << endl;
   }
 
-  // make_graph(queue_density_list, moving_density_list, imagePath, frameskip);
+  make_graph(queue_density_list, moving_density_list, imagePath, frameskip);
   double utility_queue = find_utility_qd(queue_density_list, 1);
   // double utility_moving = find_utility_qd(queue_density_list, frameskip);
   cout << utility_queue << endl;
@@ -73,11 +79,13 @@ int main(int argc, char **argv) {
   videoPath = "input/trafficvideo.mp4";
   imagePath = "output/output.png";
   bool choose = false;
-  int method = 0;
 
   parameters = Parameters();
 
-  parse(argc, argv, imagePath, videoPath, frameskip, choose, method);
+  parse(argc, argv, imagePath, videoPath, frameskip, choose, method,
+        num_threads);
+
+  cout << num_threads << " " << method << endl;
 
   std::ifstream file(videoPath);
   if (!file.is_open()) {

@@ -1,5 +1,5 @@
 CC		= g++
-C_FLAGS = -g 
+C_FLAGS = -g -std=c++17
 
 BIN		= bin
 SRCS	= src/*.cpp
@@ -18,7 +18,7 @@ LIBS = $(OPENCV)
 # 	$(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(LIBS)
 	
 EXECUTABLE = main
-all: $(BIN)/$(EXECUTABLE)
+all: clean $(BIN)/$(EXECUTABLE)
 
 clean:
 	$(RM) $(BIN)/$(EXECUTABLE)

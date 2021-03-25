@@ -47,7 +47,7 @@ void make_graph(vector<double> queue_density_list,
   // Plot line from given x and y data. Color is selected automatically.
   plt::named_plot("Queue Density", time, queue_density_list);
 
-  plt::named_plot("Moving Density", time, moving_density_list);
+  // plt::named_plot("Moving Density", time, moving_density_list);
 
   plt::xlim(0, (int)queue_density_list.size() * frameskip / 15);
   // Add graph title
