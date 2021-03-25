@@ -6,7 +6,7 @@ SRCS	= src/*.cpp
 PROG = bin/main
 SRC = src
 INCLUDE	:= /usr/include/python3.8
-LIB		:= -lpython3.8 -lboost_program_options
+LIB		:= -lpython3.8 -lboost_program_options -lpthread
 
 
 OPENCV = `pkg-config opencv --cflags --libs`
