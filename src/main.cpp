@@ -39,24 +39,25 @@ void make_csv(vector<double> queue_density_list,
 
 void start(vector_point source_pts = scr_pts) {
   cv::VideoCapture capture = getImageStream(videoPath);
+  cout<<capture.get(cv::CAP_PROP_FPS);
   vector<double> queue_density_list, moving_density_list;
 
   initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
 
   parameters.initialize();
   //calc_density(queue_density_list, moving_density_list, capture, frameskip, source_pts);
-  method2(queue_density_list, capture, source_pts);
+  method5(moving_density_list, capture, source_pts);
   parameters.complete();
 
-  cout << " queue density : " << queue_density_list.size() << endl;
-  for(int i=0;i<10;i++){
-    cout<<queue_density_list[i]<<endl;
-  }
+  cout << " moving density : " << moving_density_list.size() << endl;
+  // for(int i=0;i<10;i++){
+  //   cout<<queue_density_list[i]<<endl;
+  // }
 
   // make_graph(queue_density_list, moving_density_list, imagePath, frameskip);
-  double utility_queue = find_utility_qd(queue_density_list, 1);
-  // double utility_moving = find_utility_qd(queue_density_list, frameskip);
-  cout << utility_queue << endl;
+  // double utility_queue = find_utility_md(queue_density_list, 1);
+  double utility_moving = find_utility_md(moving_density_list, 1);
+  cout << utility_moving << endl;
   // make_csv(queue_density_list, moving_density_list);
 }
 bool hasEnding(std::string const &fileName, std::string const &extension) {

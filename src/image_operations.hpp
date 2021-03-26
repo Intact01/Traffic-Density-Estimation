@@ -73,3 +73,7 @@ cv::Mat cameraCorrection(cv::Mat original_image, vector_point source_pts,
   cv::Mat cropped_image = output_image(cropRect);
   return cropped_image;
 }
+
+double dist(cv::Point2f p1, cv::Point2f p2){
+  return pow(pow(p1.x-p2.x,2)+pow(p1.y-p2.y,2),0.5);
+}

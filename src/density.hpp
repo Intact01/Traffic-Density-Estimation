@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include<pthread.h>
-
+#include <opencv2/ximgproc/sparse_match_interpolator.hpp>
 #include "image_operations.hpp"
 #include "properties.hpp"
 #include "graphs.hpp"
@@ -336,3 +336,119 @@ void method2(vector<double> &queue_density_list, cv::VideoCapture capture, vecto
   }
 }
 
+void method0_md(vector<double> &moving_density_list, cv::VideoCapture capture, vector_point source_points){
+  cv::Mat frame, prvs, next;
+  capture >> frame;  // capture the first frame
+
+  vector<double> original_moving_list;
+
+  int counter = 0;
+  int index = 0;
+
+  cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+  prvs = cameraCorrection(frame, source_points, dest_pts);
+
+  int total_pixels = prvs.rows * prvs.cols;
+
+  double last_k_sum = 0;
+  int k = 5;
+
+  while (true) {
+    counter++;
+    capture >> frame;  // capture next frame
+
+    if (frame.empty()) break;
+
+    // convert to greyscale and correct the camera angle
+    cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    frame = cameraCorrection(frame, source_points, dest_pts);
+
+    // update original motion density list
+    int changed_pixels = processMotion(frame, prvs, next);
+    double moving_density = (double)changed_pixels / total_pixels;
+    original_moving_list.push_back(moving_density);
+    index++;
+
+    // take avg with last k frames and update motion density list
+    last_k_sum += moving_density;
+    if (index > k) last_k_sum -= original_moving_list[index - k];
+
+    double actual_density = last_k_sum / k;
+    moving_density_list.push_back(actual_density);
+
+    //  Update the previous frame
+    frame.copyTo(prvs);
+    std::cout << left << setw(10) << (counter)<< left << setw(10)
+              << actual_density << endl;
+
+  }
+
+}
+
+void method5(vector<double> &moving_density_list, cv::VideoCapture capture, vector_point source_points){
+
+  cv::Mat prvs, prvs_gray;
+  vector<cv::Point2f> p0, p1;
+  // Take first frame and find corners in it
+  capture >> prvs;
+  prvs = cameraCorrection(prvs, source_points, dest_pts);
+  int total_pixels = prvs.rows*prvs.cols;
+  cvtColor(prvs, prvs_gray, cv::COLOR_BGR2GRAY);
+  cv::goodFeaturesToTrack(prvs_gray, p0, 300, 0.1, 7, cv::Mat(), 7, false, 0.04);
+  // Create a mask image for drawing purposes
+  cv::Mat mask = cv::Mat::zeros(prvs.size(), prvs.type());
+  int dilation_size = 3;
+  cv::Mat element2 = cv::getStructuringElement(
+      cv::MORPH_RECT, cv::Size(2 * dilation_size + 1, 2 * dilation_size + 1),
+      cv::Point(dilation_size, dilation_size));
+  int counter =0;
+  while(true){
+    counter++;
+    cv::Mat frame, frame_gray;
+    capture >> frame;
+    if (frame.empty())
+        break;
+    frame = cameraCorrection(frame, source_points, dest_pts);
+    cvtColor(frame, frame_gray, cv::COLOR_BGR2GRAY);
+    // calculate optical flow
+    vector<uchar> status;
+    vector<float> err;
+    cv::TermCriteria criteria = cv::TermCriteria((cv::TermCriteria::COUNT) + (cv::TermCriteria::EPS), 10, 0.03);
+    cv::calcOpticalFlowPyrLK(prvs_gray, frame_gray, p0, p1, status, err, cv::Size(20,20), 2, criteria);
+    mask = cv::Mat::zeros(frame.size(), frame.type());
+    vector<cv::Point2f> good_new;
+    for(uint i = 0; i < p0.size(); i++)
+    {
+        // Select good points
+        if(status[i] == 1) {
+            good_new.push_back(p1[i]);
+            // draw the tracks
+            if(dist(p1[i], p0[i])>=0.5){
+              line(mask,p1[i], p0[i], WHITE, 5);
+            }
+            
+            circle(frame, p1[i], 5, BLACK, -1);
+        }
+    }
+    cv::dilate(mask, mask, element2);
+    cv::dilate(mask, mask, element2);
+    cv::dilate(mask, mask, element2);
+    cv::dilate(mask, mask, element2);
+    cv::dilate(mask, mask, element2);
+    cv::dilate(mask, mask, element2);
+    // imshow("frame", frame);
+    cvtColor(mask,mask,cv::COLOR_BGR2GRAY);
+    // imshow("mask", mask);
+    double moving_desnity = (double)cv::countNonZero(mask)/total_pixels;
+    moving_density_list.push_back(moving_desnity);
+    std::cout<<left <<setw(10)<< counter<<left<<setw(10)<<moving_desnity<<endl;
+    // int keyboard = cv::waitKey(30);
+    // if (keyboard == 'q' || keyboard == 27)
+    //     break;
+    prvs_gray = frame_gray.clone();
+      // Now update the previous frame and previous points
+      cv::goodFeaturesToTrack(prvs_gray, p0, 300, 0.1, 7, cv::Mat(), 7, false, 0.04);
+
+
+  }
+}
