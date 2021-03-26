@@ -191,10 +191,9 @@ void *threading_frames(void *arguments) {
   int curr_index = 500 + rem * frames_per_thread;
 
   while (true) {
-    captures[rem].grab();
-    captures[rem].retrieve(frame);
+    captures[rem + 1] >> frame;
 
-    if (curr_index >= 500 + (rem + 1) * frames_per_thread || frame.empty())
+    if (curr_index >= -1 + 500 + (rem + 1) * frames_per_thread || frame.empty())
       break;
 
     // mtx.lock();
@@ -234,8 +233,13 @@ void method4(vector<double> &queue_density_list,
 
   int td[num_threads];
   pBSub = cv::createBackgroundSubtractorMOG2();
-  qd_list = queue_density_list;
-  qd_list.resize(captures[0].get(cv::CAP_PROP_FRAME_COUNT) - 1);
+  // qd_list = queue_density_list;
+  // qd_list.resize(captures[0].get(cv::CAP_PROP_FRAME_COUNT) - 1);
+
+  for (int i = 0; i < -1 + captures[0].get(cv::CAP_PROP_FRAME_COUNT); i++) {
+    qd_list.push_back(0);
+  }
+
   src_pts = source_points;
   cv::Mat frame;
   captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
@@ -356,3 +360,15 @@ void method2(vector<double> &queue_density_list, cv::VideoCapture capture,
     std::cout << (counter) << queue_density << endl;
   }
 }
+
+void method1(vector<double> &queue_density_list, cv::VideoCapture capture,
+             vector_point source_points) {}
+// void method2(vector<double> &queue_density_list, cv::VideoCapture capture,
+//              vector_point source_points) {}
+
+void method3(vector<double> &queue_density_list,
+             vector<cv::VideoCapture> capture, vector_point source_points,
+             int num_threads) {}
+
+void method5(vector<double> &moving_density_list, cv::VideoCapture capture,
+             vector_point source_points) {}
