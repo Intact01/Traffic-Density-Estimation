@@ -41,16 +41,26 @@ void make_csv(vector<double> queue_density_list,
 }
 
 void start(vector_point source_pts = scr_pts) {
-  cv::VideoCapture capture = getImageStream(videoPath);
+  vector<cv::VideoCapture> captures;
+  captures.push_back(getImageStream(videoPath));
+
+  for (int i = 1; i <= num_threads; i++) {
+    cv::VideoCapture cap = getImageStream(videoPath);
+    int num_frames = captures[0].get(cv::CAP_PROP_FRAME_COUNT);
+    int frames_per_thread = ceil((num_frames - 500) / num_threads);
+    cap.set(cv::CAP_PROP_POS_FRAMES, 500 + i * frames_per_thread);
+    captures.push_back(cap);
+  }
+
   vector<double> queue_density_list, moving_density_list;
 
-  initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
+  initialize(captures[0].get(cv::CAP_PROP_FRAME_COUNT));
 
   parameters.initialize();
   // calc_density(queue_density_list, moving_density_list, capture, frameskip,
   // source_pts);
-  // method4(queue_density_list, capture, source_pts, num_threads);
-  method0(queue_density_list, capture, source_pts);
+  method4(queue_density_list, captures, source_pts, num_threads);
+  // method0(queue_density_list, capture, source_pts);
 
   parameters.complete();
 

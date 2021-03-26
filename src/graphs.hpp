@@ -40,7 +40,8 @@ void make_graph(vector<double> queue_density_list,
   vector<double> time;
   for (int i = 0; i < queue_density_list.size(); ++i) {
     time.push_back(i * frameskip / 15);
-  }  // Set the size of output image to 1200x780 pixels
+  }
+  // Set the size of output image to 1200x780 pixels
   plt::figure_size(1200, 780);
   plt::xlabel("Time");
   plt::ylabel("Density of Cars");

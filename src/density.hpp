@@ -7,7 +7,7 @@
 #include "image_operations.hpp"
 #include "properties.hpp"
 
-#define NUM_THREADS 5
+// #define NUM_THREADS 5
 typedef cv::Ptr<cv::BackgroundSubtractor> bagSub;
 
 struct ThreadArgs {
@@ -21,7 +21,8 @@ vector<double> qd_list;
 vector_point src_pts;
 int total_pixels = -1;
 int frame_index = 0;
-cv::VideoCapture capture;
+vector<cv::VideoCapture> captures;
+int global_num_threads;
 
 // struct thread4_args{
 //   bagSub pBackSub;
@@ -182,21 +183,24 @@ void calc_density(vector<double> &queue_density_list,
 
 void *threading_frames(void *arguments) {
   cv::Mat frame;
-  int curr_index;
   ThreadArgs args = *(ThreadArgs *)arguments;
   auto [rem, pBSub] = args;
+  int frames_per_thread = ceil(
+      (captures[0].get(cv::CAP_PROP_FRAME_COUNT) - 500) / global_num_threads);
+
+  int curr_index = 500 + rem * frames_per_thread;
 
   while (true) {
-    // curr_frames[i].copyTo(frame);
-    mtx.lock();
-    capture >> frame;
-    curr_index = frame_index;
-    frame_index++;
-    mtx.unlock();
+    captures[rem].grab();
+    captures[rem].retrieve(frame);
 
-    if (frame.empty()) {
+    if (curr_index >= 500 + (rem + 1) * frames_per_thread || frame.empty())
       break;
-    }
+
+    // mtx.lock();
+    // imshow("frame " + rem, frame);
+    // cv::waitKey(10);
+    // mtx.unlock();
 
     cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     frame = cameraCorrection(frame, src_pts, dest_pts);
@@ -207,33 +211,38 @@ void *threading_frames(void *arguments) {
     double queue_density = (double)queueSum / total_pixels;
     qd_list[curr_index] = queue_density;
 
-    mtx.lock();
+    // mtx.lock();
     cout << curr_index << " " << qd_list[curr_index] << endl;
-    mtx.unlock();
+    // mtx.unlock();
+
+    curr_index++;
   }
   return NULL;
 }
 
-void method4(vector<double> &queue_density_list, cv::VideoCapture local_capture,
+void method4(vector<double> &queue_density_list,
+             vector<cv::VideoCapture> local_captures,
              vector_point source_points, int num_threads) {
   pthread_t threads[num_threads];
   pthread_attr_t attr;
   vector<cv::Mat> frames;
   bagSub pBSub;
 
-  capture = local_capture;
+  global_num_threads = num_threads;
+
+  captures = local_captures;
 
   int td[num_threads];
   pBSub = cv::createBackgroundSubtractorMOG2();
   qd_list = queue_density_list;
-  qd_list.resize(capture.get(cv::CAP_PROP_FRAME_COUNT) - 1);
+  qd_list.resize(captures[0].get(cv::CAP_PROP_FRAME_COUNT) - 1);
   src_pts = source_points;
   cv::Mat frame;
-  capture.set(cv::CAP_PROP_FORMAT, CV_32F);
-  capture >> frame;
+  captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
+  captures[0] >> frame;
   int counter = 0;
   while (true) {
-    capture >> frame;
+    captures[0] >> frame;
 
     if (frame.empty()) {
       break;
