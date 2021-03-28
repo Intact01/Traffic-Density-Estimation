@@ -43,13 +43,7 @@ void make_csv(vector<double> queue_density_list,
 void start(vector_point source_pts = scr_pts) {
   vector<cv::VideoCapture> captures;
   captures.push_back(getImageStream(videoPath));
-
-  // cout << "size is " << captures.size() << endl;
-  // cv::VideoCapture cp = captures[1];
-  // cv::Mat frame_temp;
-  // cp >> frame_temp;
-  // imshow("temp", frame_temp);
-  // cv::waitKey(0);
+  captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
 
   for (int i = 0; i < num_threads; i++) {
     cv::VideoCapture cap = getImageStream(videoPath);
@@ -65,24 +59,26 @@ void start(vector_point source_pts = scr_pts) {
   initialize(captures[0].get(cv::CAP_PROP_FRAME_COUNT));
 
   parameters.initialize();
-  // calc_density(queue_density_list, moving_density_list, capture, frameskip,
-  // source_pts);
+
   switch (method) {
     case 1:
       method1(queue_density_list, captures[0], source_pts);
+      break;
     case 2:
       method2(queue_density_list, captures[0], source_pts);
+      break;
     case 3:
-      method3(queue_density_list, captures, source_pts, num_threads);
+      method3(queue_density_list, captures[0], source_pts, num_threads);
+      break;
     case 4:
       method4(queue_density_list, captures, source_pts, num_threads);
+      break;
     case 5:
       method5(moving_density_list, captures[0], source_pts);
+      break;
     default:
       method0(queue_density_list, captures[0], source_pts);
   }
-  // method4(queue_density_list, captures, source_pts, num_threads);
-  // method0(queue_density_list, capture, source_pts);
 
   parameters.complete();
 
