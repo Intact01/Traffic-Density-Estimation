@@ -55,7 +55,7 @@ void make_graph(vector<double> queue_density_list,
   int xlim_val =
       (int)((max(queue_density_list.size(), moving_density_list.size())) *
             frameskip / 15);
-  plt::xlim(0, xlim_val);
+  plt::xlim(0, 400);
   // Add graph title
   plt::title("Traffic Density Plot");
   // Enable legend.

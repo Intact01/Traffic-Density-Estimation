@@ -499,21 +499,20 @@ void method0_md(vector<double> &moving_density_list, cv::VideoCapture capture,
   }
 }
 
-int processMotionSparse(cv::Mat prvs, cv::Mat frame, vector<cv::Point2f> &p0,
-                        vector<cv::Point2f> &p1) {
+int processMotionSparse(cv::Mat prvs, cv::Mat frame) {
   int dilation_size = 3;
   cv::Mat element2 = cv::getStructuringElement(
       cv::MORPH_RECT, cv::Size(2 * dilation_size + 1, 2 * dilation_size + 1),
       cv::Point(dilation_size, dilation_size));
 
-  // vector<cv::Point2f> p0, p1;
+  vector<cv::Point2f> p0, p1;
   cv::Mat prvs_gray, frame_gray;
   cv::cvtColor(prvs, prvs_gray, cv::COLOR_BGR2GRAY);
   cv::cvtColor(frame, frame_gray, cv::COLOR_BGR2GRAY);
-  cv::goodFeaturesToTrack(prvs_gray, p0, 300, 0.1, 7, cv::Mat(), 7, false,
+  cv::goodFeaturesToTrack(frame_gray, p0, 300, 0.1, 7, cv::Mat(), 7, false,
                           0.04);
   cv::Mat mask = cv::Mat::zeros(frame.size(), frame.type());
-
+  imshow("blank", mask);
   vector<uchar> status;
   vector<float> err;
   cv::TermCriteria criteria = cv::TermCriteria(
@@ -530,6 +529,7 @@ int processMotionSparse(cv::Mat prvs, cv::Mat frame, vector<cv::Point2f> &p0,
       circle(frame, p1[i], 5, BLACK, -1);
     }
   }
+  imshow("undilated", mask);
   cv::dilate(mask, mask, element2);
   cv::dilate(mask, mask, element2);
   cv::dilate(mask, mask, element2);
@@ -538,27 +538,32 @@ int processMotionSparse(cv::Mat prvs, cv::Mat frame, vector<cv::Point2f> &p0,
   cv::dilate(mask, mask, element2);
 
   cvtColor(mask, mask, cv::COLOR_BGR2GRAY);
-  imshow("frame", frame);
-  imshow("mask", mask);
-  cv::waitKey(15);
+  // imshow("prvs", prvs);
+  // imshow("frame", frame);
+  // imshow("mask", mask);
+  // cv::waitKey(500);
   return cv::countNonZero(mask);
 }
 
 void method5(vector<double> &moving_density_list, cv::VideoCapture capture,
              vector_point source_points) {
-  cv::Mat prvs;
+  cv::Mat prvs, prvs_gray;
   // Take first frame and find corners in it
   capture >> prvs;
   vector<cv::Point2f> p0, p1;
   prvs = cameraCorrection(prvs, source_points, dest_pts);
+
   int total_pixels = prvs.rows * prvs.cols;
   int counter = 0;
   while (true) {
     cv::Mat frame;
     capture >> frame;
     if (frame.empty()) break;
+
     frame = cameraCorrection(frame, source_points, dest_pts);
-    int density_pixels = processMotionSparse(prvs, frame, p0, p1);
+    cv::Mat prvs_copy = prvs.clone(), frame_copy = frame.clone();
+
+    int density_pixels = processMotionSparse(prvs_copy, frame_copy);
 
     double moving_desnity = (double)density_pixels / total_pixels;
     moving_density_list.push_back(moving_desnity);

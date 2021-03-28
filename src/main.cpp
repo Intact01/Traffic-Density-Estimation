@@ -82,13 +82,20 @@ void start(vector_point source_pts = scr_pts) {
     case 5:
       method5(moving_density_list, capture, source_pts);
       break;
-    default:
+    case 6:
+      method0_md(moving_density_list, capture, source_pts);
+      break;
+    case 0:
       method0(queue_density_list, capture, source_pts);
+      break;
+    default:
+      cout << "Go read the documentation" << endl;
+      return;
   }
 
   parameters.complete();
 
-  if (method != 5) {
+  if (method < 5) {
     // cout << " queue density : " << queue_density_list.size() << endl;
     double utility_queue = find_utility_qd(queue_density_list, 1);
     cout << "Utility is: " << utility_queue << endl;
