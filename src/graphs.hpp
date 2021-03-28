@@ -38,7 +38,9 @@ void make_graph(vector<double> queue_density_list,
                 vector<double> moving_density_list, string &fileName,
                 int frameskip) {
   vector<double> time;
-  for (int i = 0; i < queue_density_list.size(); ++i) {
+  int list_size = max(queue_density_list.size(), moving_density_list.size());
+
+  for (int i = 0; i < list_size; ++i) {
     time.push_back(i * frameskip / 15);
   }
   // Set the size of output image to 1200x780 pixels
@@ -52,10 +54,8 @@ void make_graph(vector<double> queue_density_list,
   if (moving_density_list.size() > 0)
     plt::named_plot("Moving Density", time, moving_density_list);
 
-  int xlim_val =
-      (int)((max(queue_density_list.size(), moving_density_list.size())) *
-            frameskip / 15);
-  plt::xlim(0, 400);
+  int xlim_val = (int)(list_size * frameskip / 15);
+  plt::xlim(0, xlim_val);
   // Add graph title
   plt::title("Traffic Density Plot");
   // Enable legend.

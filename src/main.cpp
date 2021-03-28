@@ -54,7 +54,7 @@ void start(vector_point source_pts = scr_pts) {
 
   switch (method) {
     case 1:
-      method0(queue_density_list, capture, source_pts, 1);
+      method1(queue_density_list, capture, source_pts, frameskip);
       break;
     case 2:
       method2(queue_density_list, capture, source_pts);
@@ -63,16 +63,19 @@ void start(vector_point source_pts = scr_pts) {
       method3(queue_density_list, capture, source_pts, num_threads);
       break;
     case 4: {
+      cv::Mat frame;
       vector<cv::VideoCapture> captures;
       captures.push_back(getImageStream(videoPath));
       captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
+      int num_frames = captures[0].get(cv::CAP_PROP_FRAME_COUNT);
+
+      captures[0] >> frame;
 
       for (int i = 0; i < num_threads; i++) {
         cv::VideoCapture cap = getImageStream(videoPath);
-        int num_frames = captures[0].get(cv::CAP_PROP_FRAME_COUNT);
-        int frames_per_thread = ceil((num_frames - 500) / num_threads);
-        cap.set(cv::CAP_PROP_POS_FRAMES, 500 + i * frames_per_thread);
+        int frames_per_thread = ceil((num_frames - 501) / num_threads);
         cap.set(cv::CAP_PROP_FORMAT, CV_32F);
+        cap.set(cv::CAP_PROP_POS_FRAMES, 499 + i * frames_per_thread);
         captures.push_back(cap);
       }
       parameters.initialize();
@@ -89,7 +92,7 @@ void start(vector_point source_pts = scr_pts) {
       method0(queue_density_list, capture, source_pts);
       break;
     default:
-      cout << "Go read the documentation" << endl;
+      // cout << "Go read the documentation" << endl;
       return;
   }
 
@@ -97,12 +100,14 @@ void start(vector_point source_pts = scr_pts) {
 
   if (method < 5) {
     // cout << " queue density : " << queue_density_list.size() << endl;
-    double utility_queue = find_utility_qd(queue_density_list, 1);
-    cout << "Utility is: " << utility_queue << endl;
-
+    double utility_queue = find_utility_qd(queue_density_list, frameskip);
+    // cout << "Utility is: " << utility_queue << endl;
+    cout << utility_queue << endl;
   } else {
-    double utility_moving = find_utility_md(moving_density_list, 1);
-    cout << "Utility is: " << utility_moving << endl;
+    double utility_moving = find_utility_md(moving_density_list, frameskip);
+    // cout << "Utility is: " << utility_moving << endl;
+    cout << utility_moving << endl;
+
     // cout << " moving density : " << moving_density_list.size() << endl;
   }
 
@@ -129,7 +134,7 @@ int main(int argc, char **argv) {
   parse(argc, argv, imagePath, videoPath, frameskip, choose, method,
         num_threads);
 
-  cout << num_threads << " " << method << endl;
+  // cout << num_threads << " " << method << endl;
 
   std::ifstream file(videoPath);
   if (!file.is_open()) {
@@ -148,7 +153,7 @@ int main(int argc, char **argv) {
     start();
   }
 
-  cout << "time elapsed: " << parameters.get_time_elapsed() << endl;
-
+  // cout << "time elapsed: " << parameters.get_time_elapsed() << endl;
+  cout << parameters.get_time_elapsed() << endl;
   return 0;
 }
