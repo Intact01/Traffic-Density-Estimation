@@ -41,56 +41,64 @@ void make_csv(vector<double> queue_density_list,
 }
 
 void start(vector_point source_pts = scr_pts) {
-  vector<cv::VideoCapture> captures;
-  captures.push_back(getImageStream(videoPath));
-  captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
+  cv::VideoCapture capture = getImageStream(videoPath);
+  capture.set(cv::CAP_PROP_FORMAT, CV_32F);
 
-  for (int i = 0; i < num_threads; i++) {
-    cv::VideoCapture cap = getImageStream(videoPath);
-    int num_frames = captures[0].get(cv::CAP_PROP_FRAME_COUNT);
-    int frames_per_thread = ceil((num_frames - 500) / num_threads);
-    cap.set(cv::CAP_PROP_POS_FRAMES, 500 + i * frames_per_thread);
-    cap.set(cv::CAP_PROP_FORMAT, CV_32F);
-    captures.push_back(cap);
-  }
+  // cout << capture.get(cv::CAP_PROP_FPS);
 
   vector<double> queue_density_list, moving_density_list;
 
-  initialize(captures[0].get(cv::CAP_PROP_FRAME_COUNT));
+  initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
 
   parameters.initialize();
 
   switch (method) {
     case 1:
-      method1(queue_density_list, captures[0], source_pts);
+      method0(queue_density_list, capture, source_pts, 1);
       break;
     case 2:
-      method2(queue_density_list, captures[0], source_pts);
+      method2(queue_density_list, capture, source_pts);
       break;
     case 3:
-      method3(queue_density_list, captures[0], source_pts, num_threads);
+      method3(queue_density_list, capture, source_pts, num_threads);
       break;
-    case 4:
+    case 4: {
+      vector<cv::VideoCapture> captures;
+      captures.push_back(getImageStream(videoPath));
+      captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
+
+      for (int i = 0; i < num_threads; i++) {
+        cv::VideoCapture cap = getImageStream(videoPath);
+        int num_frames = captures[0].get(cv::CAP_PROP_FRAME_COUNT);
+        int frames_per_thread = ceil((num_frames - 500) / num_threads);
+        cap.set(cv::CAP_PROP_POS_FRAMES, 500 + i * frames_per_thread);
+        cap.set(cv::CAP_PROP_FORMAT, CV_32F);
+        captures.push_back(cap);
+      }
       method4(queue_density_list, captures, source_pts, num_threads);
       break;
+    }
     case 5:
-      method5(moving_density_list, captures[0], source_pts);
+      method5(moving_density_list, capture, source_pts);
       break;
     default:
-      method0(queue_density_list, captures[0], source_pts);
+      method0(queue_density_list, capture, source_pts);
   }
 
   parameters.complete();
 
-  cout << " queue density : " << queue_density_list.size() << endl;
-  for (int i = 0; i < 10; i++) {
-    cout << queue_density_list[i] << endl;
+  if (method != 5) {
+    // cout << " queue density : " << queue_density_list.size() << endl;
+    double utility_queue = find_utility_qd(queue_density_list, 1);
+    cout << "Utility is: " << utility_queue << endl;
+
+  } else {
+    double utility_moving = find_utility_md(moving_density_list, 1);
+    cout << "Utility is: " << utility_moving << endl;
+    // cout << " moving density : " << moving_density_list.size() << endl;
   }
 
   make_graph(queue_density_list, moving_density_list, imagePath, frameskip);
-  double utility_queue = find_utility_qd(queue_density_list, 1);
-  // double utility_moving = find_utility_qd(queue_density_list, frameskip);
-  cout << utility_queue << endl;
   // make_csv(queue_density_list, moving_density_list);
 }
 bool hasEnding(std::string const &fileName, std::string const &extension) {
@@ -103,7 +111,7 @@ bool hasEnding(std::string const &fileName, std::string const &extension) {
 }
 // main function
 int main(int argc, char **argv) {
-  frameskip = 5;
+  frameskip = 1;
   videoPath = "input/trafficvideo.mp4";
   imagePath = "output/output.png";
   bool choose = false;

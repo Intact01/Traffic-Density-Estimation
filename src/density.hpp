@@ -1,7 +1,6 @@
 #pragma once
-#include <pthread.h>
 
-#include <iostream>
+#include <bits/stdc++.h>
 
 #include "graphs.hpp"
 #include "image_operations.hpp"
@@ -15,6 +14,7 @@ vector<bagSub> bgSubs;
 struct Method4ThreadArgs {
   int rem;
   bagSub pBSub;
+  cv::VideoCapture curr_capture;
 };
 
 struct Method3ThreadArgs {
@@ -31,7 +31,7 @@ vector<double> qd_list;
 vector_point src_pts;
 int total_pixels = -1;
 int frame_index = 0;
-vector<cv::VideoCapture> captures;
+// vector<cv::VideoCapture> captures;
 int global_num_threads;
 
 int processQueue(cv::Mat frame, bagSub pBackSub) {
@@ -185,14 +185,14 @@ void calc_density(vector<double> &queue_density_list,
 void *threading_frames(void *arguments) {
   cv::Mat frame;
   Method4ThreadArgs *args = (Method4ThreadArgs *)arguments;
-  auto [rem, pBSub] = *args;
-  int frames_per_thread = ceil(
-      (captures[0].get(cv::CAP_PROP_FRAME_COUNT) - 500) / global_num_threads);
+  auto [rem, pBSub, capture] = *args;
+  int frames_per_thread =
+      ceil((capture.get(cv::CAP_PROP_FRAME_COUNT) - 500) / global_num_threads);
 
   int curr_index = 500 + rem * frames_per_thread;
 
   while (true) {
-    captures[rem + 1] >> frame;
+    capture >> frame;
 
     if (curr_index >= -1 + 500 + (rem + 1) * frames_per_thread || frame.empty())
       break;
@@ -245,24 +245,25 @@ void method4(vector<double> &queue_density_list,
 
   global_num_threads = num_threads;
 
-  captures = local_captures;
+  // captures = local_captures;
 
   int td[num_threads];
   pBSub = cv::createBackgroundSubtractorMOG2();
   // qd_list = queue_density_list;
   // qd_list.resize(captures[0].get(cv::CAP_PROP_FRAME_COUNT) - 1);
 
-  for (int i = 0; i < -1 + captures[0].get(cv::CAP_PROP_FRAME_COUNT); i++) {
+  for (int i = 0; i < -1 + local_captures[0].get(cv::CAP_PROP_FRAME_COUNT);
+       i++) {
     qd_list.push_back(0);
   }
 
   src_pts = source_points;
   cv::Mat frame;
-  captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
-  captures[0] >> frame;
+  local_captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
+  // local_captures[0] >> frame;
   int counter = 0;
   while (true) {
-    captures[0] >> frame;
+    local_captures[0] >> frame;
 
     if (frame.empty()) {
       break;
@@ -288,7 +289,7 @@ void method4(vector<double> &queue_density_list,
   for (int i = 0; i < num_threads; i++) {
     td[i] = i;
     cout << "create thread " << i << endl;
-    Method4ThreadArgs args{td[i], pBSub};
+    Method4ThreadArgs args{td[i], pBSub, local_captures[i]};
     args_array.push_back(args);
   }
 
@@ -323,7 +324,6 @@ void method0(vector<double> &queue_density_list, cv::VideoCapture capture,
       cv::createBackgroundSubtractorMOG2();  // to create background subtractor
 
   while (true) {
-    counter++;
     capture >> frame;  // capture next frame
 
     if (counter % fast_forward != 0) continue;
@@ -339,47 +339,53 @@ void method0(vector<double> &queue_density_list, cv::VideoCapture capture,
 
     std::cout << left << setw(10) << (counter) << left << setw(10)
               << queue_density << left << endl;
+    counter++;
   }
 }
 
 void method2(vector<double> &queue_density_list, cv::VideoCapture capture,
-             vector_point source_points, int width = 176, int height = 144) {
+             vector_point source_points, int width = 480, int height = 360) {
   cv::Mat frame;
   capture >> frame;  // capture the first frame
 
   int counter = 0;
+  for (int i = 0; i < 4; i++) {
+    cv::Point2f pt;
+    pt = dest_pts[i];
+    pt.x = pt.x * width / frame.size().width;
+    pt.y = pt.y * height / frame.size().height;
+    dest_pts[i] = pt;
+
+    pt = source_points[i];
+    pt.x = pt.x * width / frame.size().width;
+    pt.y = pt.y * height / frame.size().height;
+    source_points[i] = pt;
+  }
+  resize(frame, frame, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
   cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
   frame = cameraCorrection(frame, source_points, dest_pts);
-  resize(frame, frame, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
   int total_pixels = frame.rows * frame.cols;
   cout << total_pixels << endl;
   bagSub pBackSub1;
   pBackSub1 =
       cv::createBackgroundSubtractorMOG2();  // to create background subtractor
   while (true) {
-    counter++;
     capture >> frame;  // capture next frame
 
     if (frame.empty()) break;
-
+    resize(frame, frame, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
     // convert to greyscale and correct the camera angle
     cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     frame = cameraCorrection(frame, source_points, dest_pts);
-    resize(frame, frame, cv::Size(width, height), 0, 0, cv::INTER_CUBIC);
-    imshow("method2", frame);
-    cv::waitKey(10);
     // update queue density list
     int queueSum = processQueue(frame, pBackSub1);
     double queue_density = (double)queueSum / total_pixels;
     queue_density_list.push_back(queue_density);
 
     std::cout << (counter) << queue_density << endl;
+    counter++;
   }
 }
-
-void method1(vector<double> &queue_density_list, cv::VideoCapture capture,
-             vector_point source_points) {}
-
 void method3(vector<double> &queue_density_list, cv::VideoCapture local_capture,
              vector_point source_points, int num_threads) {
   pthread_t threads[num_threads];
@@ -411,8 +417,6 @@ void method3(vector<double> &queue_density_list, cv::VideoCapture local_capture,
                            frame, 0.0};
     args_array.push_back(args);
   }
-
-  // for(int i = )
 
   int counter = 0;
   bool completed = false;
@@ -447,5 +451,117 @@ void method3(vector<double> &queue_density_list, cv::VideoCapture local_capture,
   }
 }
 
+void method0_md(vector<double> &moving_density_list, cv::VideoCapture capture,
+                vector_point source_points) {
+  cv::Mat frame, prvs, next;
+  capture >> frame;  // capture the first frame
+
+  vector<double> original_moving_list;
+
+  int counter = 0;
+  int index = 0;
+
+  cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+  prvs = cameraCorrection(frame, source_points, dest_pts);
+
+  int total_pixels = prvs.rows * prvs.cols;
+
+  double last_k_sum = 0;
+  int k = 5;
+
+  while (true) {
+    capture >> frame;  // capture next frame
+
+    if (frame.empty()) break;
+
+    // convert to greyscale and correct the camera angle
+    cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    frame = cameraCorrection(frame, source_points, dest_pts);
+
+    // update original motion density list
+    int changed_pixels = processMotion(frame, prvs, next);
+    double moving_density = (double)changed_pixels / total_pixels;
+    original_moving_list.push_back(moving_density);
+    index++;
+
+    // take avg with last k frames and update motion density list
+    last_k_sum += moving_density;
+    if (index > k) last_k_sum -= original_moving_list[index - k];
+
+    double actual_density = last_k_sum / k;
+    moving_density_list.push_back(actual_density);
+
+    //  Update the previous frame
+    frame.copyTo(prvs);
+    std::cout << left << setw(10) << (counter) << left << setw(10)
+              << actual_density << endl;
+    counter++;
+  }
+}
+
+int processMotionSparse(cv::Mat prvs, cv::Mat frame) {
+  int dilation_size = 3;
+  cv::Mat element2 = cv::getStructuringElement(
+      cv::MORPH_RECT, cv::Size(2 * dilation_size + 1, 2 * dilation_size + 1),
+      cv::Point(dilation_size, dilation_size));
+
+  vector<cv::Point2f> p0, p1;
+  cv::Mat prvs_gray, frame_gray;
+  cv::cvtColor(prvs, prvs_gray, cv::COLOR_BGR2GRAY);
+  cv::cvtColor(frame, frame_gray, cv::COLOR_BGR2GRAY);
+  cv::goodFeaturesToTrack(prvs_gray, p0, 300, 0.1, 7, cv::Mat(), 7, false,
+                          0.04);
+  cv::Mat mask = cv::Mat::zeros(prvs.size(), prvs.type());
+
+  vector<uchar> status;
+  vector<float> err;
+  cv::TermCriteria criteria = cv::TermCriteria(
+      (cv::TermCriteria::COUNT) + (cv::TermCriteria::EPS), 10, 0.03);
+  cv::calcOpticalFlowPyrLK(prvs_gray, frame_gray, p0, p1, status, err,
+                           cv::Size(20, 20), 2, criteria);
+
+  for (uint i = 0; i < p0.size(); i++) {
+    if (dist(p1[i], p0[i]) >= 0.5) {
+      line(mask, p1[i], p0[i], WHITE, 5);
+    }
+
+    circle(frame, p1[i], 5, BLACK, -1);
+  }
+  cv::dilate(mask, mask, element2);
+  cv::dilate(mask, mask, element2);
+  cv::dilate(mask, mask, element2);
+  cv::dilate(mask, mask, element2);
+  cv::dilate(mask, mask, element2);
+  cv::dilate(mask, mask, element2);
+
+  cvtColor(mask, mask, cv::COLOR_BGR2GRAY);
+
+  return cv::countNonZero(mask);
+}
+
 void method5(vector<double> &moving_density_list, cv::VideoCapture capture,
-             vector_point source_points) {}
+             vector_point source_points) {
+  cv::Mat prvs;
+  // Take first frame and find corners in it
+  capture >> prvs;
+
+  prvs = cameraCorrection(prvs, source_points, dest_pts);
+
+  int counter = 0;
+  while (true) {
+    cv::Mat frame;
+    capture >> frame;
+    if (frame.empty()) break;
+    frame = cameraCorrection(frame, source_points, dest_pts);
+    int density_pixels = processMotionSparse(prvs, frame);
+
+    double moving_desnity = (double)density_pixels / total_pixels;
+    moving_density_list.push_back(moving_desnity);
+    std::cout << left << setw(10) << counter << left << setw(10)
+              << moving_desnity << endl;
+
+    prvs = frame.clone();
+
+    counter++;
+  }
+}
