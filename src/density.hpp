@@ -194,7 +194,7 @@ void *threading_frames(void *arguments) {
   while (true) {
     capture >> frame;
 
-    if (curr_index >= -1 + 500 + (rem + 1) * frames_per_thread || frame.empty())
+    if (curr_index >= 500 + (rem + 1) * frames_per_thread || frame.empty())
       break;
 
     cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
@@ -289,7 +289,7 @@ void method4(vector<double> &queue_density_list,
   for (int i = 0; i < num_threads; i++) {
     td[i] = i;
     cout << "create thread " << i << endl;
-    Method4ThreadArgs args{td[i], pBSub, local_captures[i]};
+    Method4ThreadArgs args{td[i], pBSub, local_captures[i + 1]};
     args_array.push_back(args);
   }
 
@@ -499,19 +499,20 @@ void method0_md(vector<double> &moving_density_list, cv::VideoCapture capture,
   }
 }
 
-int processMotionSparse(cv::Mat prvs, cv::Mat frame) {
+int processMotionSparse(cv::Mat prvs, cv::Mat frame, vector<cv::Point2f> &p0,
+                        vector<cv::Point2f> &p1) {
   int dilation_size = 3;
   cv::Mat element2 = cv::getStructuringElement(
       cv::MORPH_RECT, cv::Size(2 * dilation_size + 1, 2 * dilation_size + 1),
       cv::Point(dilation_size, dilation_size));
 
-  vector<cv::Point2f> p0, p1;
+  // vector<cv::Point2f> p0, p1;
   cv::Mat prvs_gray, frame_gray;
   cv::cvtColor(prvs, prvs_gray, cv::COLOR_BGR2GRAY);
   cv::cvtColor(frame, frame_gray, cv::COLOR_BGR2GRAY);
   cv::goodFeaturesToTrack(prvs_gray, p0, 300, 0.1, 7, cv::Mat(), 7, false,
                           0.04);
-  cv::Mat mask = cv::Mat::zeros(prvs.size(), prvs.type());
+  cv::Mat mask = cv::Mat::zeros(frame.size(), frame.type());
 
   vector<uchar> status;
   vector<float> err;
@@ -521,11 +522,13 @@ int processMotionSparse(cv::Mat prvs, cv::Mat frame) {
                            cv::Size(20, 20), 2, criteria);
 
   for (uint i = 0; i < p0.size(); i++) {
-    if (dist(p1[i], p0[i]) >= 0.5) {
-      line(mask, p1[i], p0[i], WHITE, 5);
-    }
+    if (status[i] == 1) {
+      if (dist(p1[i], p0[i]) >= 0.5) {
+        line(mask, p1[i], p0[i], WHITE, 5);
+      }
 
-    circle(frame, p1[i], 5, BLACK, -1);
+      circle(frame, p1[i], 5, BLACK, -1);
+    }
   }
   cv::dilate(mask, mask, element2);
   cv::dilate(mask, mask, element2);
@@ -535,7 +538,9 @@ int processMotionSparse(cv::Mat prvs, cv::Mat frame) {
   cv::dilate(mask, mask, element2);
 
   cvtColor(mask, mask, cv::COLOR_BGR2GRAY);
-
+  imshow("frame", frame);
+  imshow("mask", mask);
+  cv::waitKey(15);
   return cv::countNonZero(mask);
 }
 
@@ -544,16 +549,16 @@ void method5(vector<double> &moving_density_list, cv::VideoCapture capture,
   cv::Mat prvs;
   // Take first frame and find corners in it
   capture >> prvs;
-
+  vector<cv::Point2f> p0, p1;
   prvs = cameraCorrection(prvs, source_points, dest_pts);
-
+  int total_pixels = prvs.rows * prvs.cols;
   int counter = 0;
   while (true) {
     cv::Mat frame;
     capture >> frame;
     if (frame.empty()) break;
     frame = cameraCorrection(frame, source_points, dest_pts);
-    int density_pixels = processMotionSparse(prvs, frame);
+    int density_pixels = processMotionSparse(prvs, frame, p0, p1);
 
     double moving_desnity = (double)density_pixels / total_pixels;
     moving_density_list.push_back(moving_desnity);

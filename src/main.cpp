@@ -75,6 +75,7 @@ void start(vector_point source_pts = scr_pts) {
         cap.set(cv::CAP_PROP_FORMAT, CV_32F);
         captures.push_back(cap);
       }
+      parameters.initialize();
       method4(queue_density_list, captures, source_pts, num_threads);
       break;
     }

@@ -79,7 +79,8 @@ double find_utility_md(vector<double> moving_density, int frameskip) {
     row.clear();
     counter++;
   }
-  total_error = pow((total_error / moving_density.size()), 0.5);
+  cout << counter;
+  total_error = pow((total_error / counter), 0.5);
   double utility = 1 - total_error;
   return utility;
 }
