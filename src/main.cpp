@@ -3,6 +3,7 @@
 #include "arg_parser.hpp"
 #include "choice.hpp"
 #include "density.hpp"
+#include "helpers.hpp"
 #include "image_operations.hpp"
 #include "parameters.hpp"
 #include "utility.hpp"
@@ -40,6 +41,12 @@ void make_csv(vector<double> queue_density_list,
   fout.close();
 }
 
+void jump(cv::VideoCapture &cap, int pos) {
+  while (pos--) {
+    cap.grab();
+  }
+}
+
 void start(vector_point source_pts = scr_pts) {
   cv::VideoCapture capture = getImageStream(videoPath);
   capture.set(cv::CAP_PROP_FORMAT, CV_32F);
@@ -69,15 +76,17 @@ void start(vector_point source_pts = scr_pts) {
       captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
       int num_frames = captures[0].get(cv::CAP_PROP_FRAME_COUNT);
 
-      captures[0] >> frame;
-
       for (int i = 0; i < num_threads; i++) {
         cv::VideoCapture cap = getImageStream(videoPath);
-        int frames_per_thread = ceil((num_frames - 501) / num_threads);
+        int frames_per_thread = ceil((double)(num_frames - 501) / num_threads);
         cap.set(cv::CAP_PROP_FORMAT, CV_32F);
-        cap.set(cv::CAP_PROP_POS_FRAMES, 499 + i * frames_per_thread);
+        jump(cap, 501 + i * frames_per_thread);
+        // cap.set(cv::CAP_PROP_POS_FRAMES, 501 + i * frames_per_thread);
         captures.push_back(cap);
       }
+
+      captures[0] >> frame;
+
       parameters.initialize();
       method4(queue_density_list, captures, source_pts, num_threads);
       break;
@@ -99,16 +108,13 @@ void start(vector_point source_pts = scr_pts) {
   parameters.complete();
 
   if (method < 5) {
-    // cout << " queue density : " << queue_density_list.size() << endl;
     double utility_queue = find_utility_qd(queue_density_list, frameskip);
-    // cout << "Utility is: " << utility_queue << endl;
+    logger.log("Utility is: " + to_string(utility_queue));
     cout << utility_queue << endl;
   } else {
     double utility_moving = find_utility_md(moving_density_list, frameskip);
-    // cout << "Utility is: " << utility_moving << endl;
+    logger.log("Utility is: " + to_string(utility_moving));
     cout << utility_moving << endl;
-
-    // cout << " moving density : " << moving_density_list.size() << endl;
   }
 
   make_graph(queue_density_list, moving_density_list, imagePath, frameskip);
@@ -128,13 +134,14 @@ int main(int argc, char **argv) {
   videoPath = "input/trafficvideo.mp4";
   imagePath = "output/output.png";
   bool choose = false;
+  bool verbose = false;
 
   parameters = Parameters();
 
   parse(argc, argv, imagePath, videoPath, frameskip, choose, method,
-        num_threads);
+        num_threads, logger.enable);
 
-  // cout << num_threads << " " << method << endl;
+  // cout << logger.enable << endl;
 
   std::ifstream file(videoPath);
   if (!file.is_open()) {

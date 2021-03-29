@@ -4,6 +4,7 @@
 
 #include "graphs.hpp"
 #include "image_operations.hpp"
+#include "helpers.hpp"
 #include "properties.hpp"
 
 // #define NUM_THREADS 5
@@ -142,7 +143,7 @@ int processMotionSparse(cv::Mat prvs, cv::Mat frame) {
       circle(frame, p1[i], 5, BLACK, -1);
     }
   }
-  imshow("undilated", mask);
+  // imshow("undilated", mask);
   cv::dilate(mask, mask, element2);
   cv::dilate(mask, mask, element2);
   cv::dilate(mask, mask, element2);
@@ -163,7 +164,7 @@ void *threading_frames(void *arguments) {
   Method4ThreadArgs *args = (Method4ThreadArgs *)arguments;
   auto [rem, pBSub, capture] = *args;
   int frames_per_thread =
-      ceil((capture.get(cv::CAP_PROP_FRAME_COUNT) - 501) / global_num_threads);
+      ceil((double)(capture.get(cv::CAP_PROP_FRAME_COUNT) - 501) / global_num_threads);
 
   int curr_index = 500 + rem * frames_per_thread;
   int temp = capture.get(cv::CAP_PROP_POS_FRAMES);
@@ -183,7 +184,9 @@ void *threading_frames(void *arguments) {
     qd_list[curr_index] = queue_density;
 
     // mtx.lock();
-    // cout << curr_index << " " << qd_list[curr_index] << endl;
+    stringstream ss;
+    ss << curr_index << " " << qd_list[curr_index];
+    logger.log(ss.str());
     // mtx.unlock();
 
     curr_index++;
@@ -237,8 +240,10 @@ void method0(vector<double> &queue_density_list, cv::VideoCapture capture,
     double queue_density = (double)queueSum / total_pixels;
     queue_density_list.push_back(queue_density);
 
-    // std::cout << left << setw(10) << (counter) << left << setw(10)
-    //           << queue_density << left << endl;
+    stringstream ss;
+    ss << left << setw(10) << (counter) << left << setw(10) << queue_density
+       << left;
+    logger.log(ss.str());
     counter++;
   }
 }
@@ -271,8 +276,10 @@ void method1(vector<double> &queue_density_list, cv::VideoCapture capture,
     double queue_density = (double)queueSum / total_pixels;
     queue_density_list.push_back(queue_density);
 
-    // std::cout << left << setw(10) << (counter) << left << setw(10)
-    //           << queue_density << left << endl;
+    stringstream ss;
+    ss << left << setw(10) << (counter) << left << setw(10) << queue_density
+       << left;
+    logger.log(ss.str());
     counter++;
   }
 }
@@ -319,8 +326,11 @@ void method0_md(vector<double> &moving_density_list, cv::VideoCapture capture,
 
     //  Update the previous frame
     frame.copyTo(prvs);
-    // std::cout << left << setw(10) << (counter) << left << setw(10)
-    //           << actual_density << endl;
+
+    stringstream ss;
+    ss << left << setw(10) << (counter) << left << setw(10) << actual_density
+       << left;
+    logger.log(ss.str());
     counter++;
   }
 }
@@ -364,7 +374,9 @@ void method2(vector<double> &queue_density_list, cv::VideoCapture capture,
     double queue_density = (double)queueSum / total_pixels;
     queue_density_list.push_back(queue_density);
 
-    // std::cout << (counter) << queue_density << endl;
+    stringstream ss;
+    ss << counter << queue_density;
+    logger.log(ss.str());
     counter++;
   }
 }
@@ -428,7 +440,11 @@ void method3(vector<double> &queue_density_list, cv::VideoCapture local_capture,
     }
     total_queue_density /= num_threads;
     queue_density_list.push_back(total_queue_density);
-    // cout << counter << " " << total_queue_density << endl;
+
+    stringstream ss;
+    ss << counter << total_queue_density;
+    logger.log(ss.str());
+
     counter++;
   }
 }
@@ -476,7 +492,10 @@ void method4(vector<double> &queue_density_list,
       }
       double queue_density = (double)queueSum / total_pixels;
       qd_list[counter] = queue_density;
-      // cout << counter << " " << qd_list[counter] << endl;
+
+      stringstream ss;
+      ss << counter << " " << qd_list[counter];
+      logger.log(ss.str());
       counter++;
 
     } else
@@ -530,8 +549,9 @@ void method5(vector<double> &moving_density_list, cv::VideoCapture capture,
 
     double moving_desnity = (double)density_pixels / total_pixels;
     moving_density_list.push_back(moving_desnity);
-    // std::cout << left << setw(10) << counter << left << setw(10)
-    //           << moving_desnity << endl;
+    stringstream ss;
+    ss << left << setw(10) << counter << left << setw(10) << moving_desnity;
+    logger.log(ss.str());
 
     prvs = frame.clone();
 
