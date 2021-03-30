@@ -8,6 +8,8 @@ using namespace std;
 
 typedef std::vector<cv::Point2f> vector_point;
 typedef cv::Point2f Pt;
+typedef cv::Ptr<cv::BackgroundSubtractor> bagSub;
+
 
 cv::Scalar WHITE(255, 255, 255);
 cv::Scalar BLACK(0, 0, 0);

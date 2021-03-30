@@ -2,9 +2,9 @@
 
 #include "arg_parser.hpp"
 #include "choice.hpp"
-#include "density.hpp"
 #include "helpers.hpp"
 #include "image_operations.hpp"
+#include "methods.hpp"
 #include "parameters.hpp"
 #include "utility.hpp"
 

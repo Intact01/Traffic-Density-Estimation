@@ -1,6 +1,6 @@
 #pragma once
 
-#include "density.hpp"
+#include "methods.hpp"
 #include "opencv2/opencv.hpp"
 
 using namespace std;
