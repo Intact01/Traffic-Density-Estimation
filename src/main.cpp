@@ -70,25 +70,25 @@ void start(vector_point source_pts = scr_pts) {
       method3(queue_density_list, capture, source_pts, num_threads);
       break;
     case 4: {
-      cv::Mat frame;
-      vector<cv::VideoCapture> captures;
-      captures.push_back(getImageStream(videoPath));
-      captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
-      int num_frames = captures[0].get(cv::CAP_PROP_FRAME_COUNT);
+      // cv::Mat frame;
+      // vector<cv::VideoCapture> captures;
+      // captures.push_back(getImageStream(videoPath));
+      // captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
+      // int num_frames = captures[0].get(cv::CAP_PROP_FRAME_COUNT);
 
-      for (int i = 0; i < num_threads; i++) {
-        cv::VideoCapture cap = getImageStream(videoPath);
-        int frames_per_thread = ceil((double)(num_frames - 501) / num_threads);
-        cap.set(cv::CAP_PROP_FORMAT, CV_32F);
-        jump(cap, 501 + i * frames_per_thread);
-        // cap.set(cv::CAP_PROP_POS_FRAMES, 501 + i * frames_per_thread);
-        captures.push_back(cap);
-      }
+      // for (int i = 0; i < num_threads; i++) {
+      //   cv::VideoCapture cap = getImageStream(videoPath);
+      //   int frames_per_thread = ceil((double)(num_frames - 501) /
+      //   num_threads); cap.set(cv::CAP_PROP_FORMAT, CV_32F); jump(cap, 501 + i
+      //   * frames_per_thread);
+      //   // cap.set(cv::CAP_PROP_POS_FRAMES, 501 + i * frames_per_thread);
+      //   captures.push_back(cap);
+      // }
 
-      captures[0] >> frame;
+      // captures[0] >> frame;
 
       parameters.initialize();
-      method4(queue_density_list, captures, source_pts, num_threads);
+      method4(queue_density_list, capture, source_pts, num_threads);
       break;
     }
     case 5:

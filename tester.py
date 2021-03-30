@@ -4,6 +4,8 @@ import sys
 import time
 
 executable = 'bin/main'
+time_list = []
+utility_list = []
 
 
 def build():
@@ -18,25 +20,26 @@ if method == '1':
     args = "-r"
     x_label = "frame_skips"
 elif method == '4' or method == '3':
-    x_axis_list = [i for i in range(1, 10)]
+    x_axis_list = [i for i in range(0, 10)]
     args = '-t'
     x_label = "threads"
 
 
-def plot_graph():
-    time_list = []
-    utility_list = []
-    for x_val in x_axis_list:
-        # time.sleep(100)
+def calc(val, m, a):
+    cmd = f"{executable} -m{m} {a}{val}"
+    print(cmd)
+    p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    output, err = p.communicate()
+    utility, execution_time = output.split()
+    print(utility, execution_time)
+    time_list.append(float(execution_time))
+    utility_list.append(float(utility))
 
-        cmd = f"{executable} -m{method} {args}{x_val}"
-        print(cmd)
-        p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-        output, err = p.communicate()
-        utility, execution_time = output.split()
-        print(utility, execution_time)
-        time_list.append(float(execution_time))
-        utility_list.append(float(utility))
+
+def plot_graph():
+    calc("", 1, "")
+    for x_val in x_axis_list[1:]:
+        calc(x_val, method, args)
 
     fig, ax = plt.subplots()
     ax.plot(x_axis_list, time_list, color="red", marker="o")

@@ -30,14 +30,17 @@ double find_utility_qd(vector<double> queue_density, int frameskip) {
     error_qd = qd - qd_base;
     max_error = max(qd_base, 1 - qd_base);
     error_qd = error_qd / max_error;
-    // cout << error_qd << endl;
+    logger.log(to_string(counter) + " " + to_string(error_qd));
 
     total_error += pow(error_qd, 2);
     row.clear();
     counter++;
   }
-  total_error = pow((total_error / counter), 0.5);
+  // cout << total_error << endl;
+  total_error = pow((abs(total_error) / counter), 0.5);
+  // cout << total_error << endl;
   double utility = 1 - total_error;
+  logger.log("Util :" + to_string(utility));
   return utility;
 }
 
