@@ -3,8 +3,8 @@
 #include <bits/stdc++.h>
 
 #include "graphs.hpp"
-#include "image_operations.hpp"
 #include "helpers.hpp"
+#include "image_operations.hpp"
 #include "properties.hpp"
 
 // #define NUM_THREADS 5
@@ -44,10 +44,10 @@ int processQueue(cv::Mat frame, bagSub pBackSub) {
       cv::MORPH_RECT, cv::Size(2 * dilation_size + 1, 2 * dilation_size + 1),
       cv::Point(dilation_size, dilation_size));
 
-  mtx.lock();
+  // mtx.lock();
   pBackSub->apply(frame, fgMask, 0);
   fgMask.copyTo(frame1);
-  mtx.unlock();
+  // mtx.unlock();
 
   // successive erosion and dilation to fill holes in parse
   cv::Mat thresh;
@@ -164,7 +164,8 @@ void *threading_frames(void *arguments) {
   Method4ThreadArgs *args = (Method4ThreadArgs *)arguments;
   auto [rem, pBSub, capture] = *args;
   int frames_per_thread =
-      ceil((double)(capture.get(cv::CAP_PROP_FRAME_COUNT) - 501) / global_num_threads);
+      ceil((double)(capture.get(cv::CAP_PROP_FRAME_COUNT) - 501) /
+           global_num_threads);
 
   int curr_index = 500 + rem * frames_per_thread;
   int temp = capture.get(cv::CAP_PROP_POS_FRAMES);

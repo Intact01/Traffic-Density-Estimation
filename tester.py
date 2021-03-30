@@ -18,7 +18,7 @@ if method == '1':
     args = "-r"
     x_label = "frame_skips"
 elif method == '4' or method == '3':
-    x_axis_list = [i for i in range(1, 10)]
+    x_axis_list = [i for i in range(1, 8)]
     args = '-t'
     x_label = "threads"
 
