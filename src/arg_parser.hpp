@@ -8,7 +8,6 @@ const string help_opt = "help";  // constant variables
 const string video_path_opt = "file";
 const string frame_rate_opt = "frameskip";
 const string image_path_opt = "save";
-const string choose_section_opt = "choose";
 const string choose_method_opt = "method";
 const string num_threads_opt = "thread";
 const string verbose_opt = "verbose";
@@ -18,7 +17,6 @@ const char *help_opt_name = "help,h";
 const char *video_path_opt_name = "file,f";
 const char *frame_rate_opt_name = "frameskip,r";
 const char *image_path_opt_name = "save,s";
-const char *choose_section_opt_name = "choose,c";
 const char *choose_method_opt_name = "method,m";
 const char *num_threads_opt_name = "thread,t";
 const char *verbose_opt_name = "verbose,v";
@@ -33,20 +31,19 @@ struct Resolution {
 
 // parses the command line args
 int parse(int argc, char **argv, string &imagePath, string &videoPath,
-           int &frameskip, bool &choose, int &method, int &num_threads,
+           int &frameskip, int &method, int &num_threads,
            bool &verbose, Resolution &res) {
   string resolution;
   po::options_description desc("Allowed options");
 
   // allowed options' description
   desc.add_options()(help_opt_name, "produce help message")(
-    video_path_opt_name, po::value<string>(&videoPath), "video path")(
-    image_path_opt_name, po::value<string>(&imagePath),"path to image of saved graph")(
-    frame_rate_opt_name,po::value<int>(&frameskip),"frames to skip processing (only for method 1)")(
-    choose_section_opt_name, "enter custom area to crop")(
-    choose_method_opt_name, po::value<int>(&method),"choose method to apply")(
+    video_path_opt_name, po::value<string>(&videoPath) -> default_value("input/trafficvideo.mp4"), "video path")(
+    image_path_opt_name, po::value<string>(&imagePath) -> default_value("output/output.png"), "path to image of saved graph")(
+    frame_rate_opt_name,po::value<int>(&frameskip) -> default_value(1), "frames to skip processing (only for method 1)")(
+    choose_method_opt_name, po::value<int>(&method) -> default_value(0), "choose method to apply")(
     verbose_opt_name, "enable logging")(
-    num_threads_opt_name, po::value<int>(&num_threads), "number of threads (only for methods 3,4)")(
+    num_threads_opt_name, po::value<int>(&num_threads) -> default_value(4), "number of threads (only for methods 3,4)")(
     resolution_opt_name, po::value<string>(&resolution),"resolution for method 2 eg - 1920x1080 (only for method 2)");
 
 
@@ -63,9 +60,6 @@ int parse(int argc, char **argv, string &imagePath, string &videoPath,
     }
     po::notify(variable_map);
 
-    if (variable_map.count(choose_section_opt)) {
-      choose = true;
-    }
     if (variable_map.count(verbose_opt)) {
       verbose = true;
     }
@@ -88,6 +82,9 @@ int parse(int argc, char **argv, string &imagePath, string &videoPath,
       return 1;
     }
     num_threads--;
+
+    
+    if(method != 1) frameskip = 1;
   } catch (exception &ex) {
     std::cerr << ex.what() << '\n';
     exit(0);

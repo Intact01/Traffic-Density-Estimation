@@ -18,7 +18,7 @@ class Density {
   cv::VideoCapture capture;
   vector_point source_points;
   int fast_forward = 1;
-  int num_threads = 1;
+  int num_threads = 4;
   Resolution resolution;
 
   void method0_qd();
@@ -193,10 +193,10 @@ void Density::method2() {
   }
 }
 void Density::method3_previous() {
-if (num_threads == 0) {
-  method0_qd();
-  return;
-}
+  if (num_threads == 0) {
+    method0_qd();
+    return;
+  }
   pthread_t consumer_threads[num_threads];
   pthread_t producer_thread;
 
@@ -210,8 +210,7 @@ if (num_threads == 0) {
 
   for (int i = 0; i < num_threads; i++) {
     int rc = pthread_create(&consumer_threads[i], NULL,
-                            (THREADFUNCPTR)&ThreadOperations::consumer,
-                            th_op);
+                            (THREADFUNCPTR)&ThreadOperations::consumer, th_op);
     if (rc) {
       cout << "Error:unable to create thread," << rc << endl;
       exit(-1);
@@ -290,7 +289,6 @@ void Density::method3() {
 }
 
 void Density::method4() {
-  cout << num_threads << endl;
   if (num_threads == 0) {
     method0_qd();
     return;

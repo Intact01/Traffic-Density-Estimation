@@ -33,7 +33,7 @@ elif method == '2':
     title = "Method 2 - changing resolution"
 elif method == '4' or method == '3':
     args_list = [i for i in range(7, 1, -1)]
-    x_axis_list = [i+1 for i in args_list] + [0]
+    x_axis_list = args_list + [0]
     args = '-t'
     x_label = "threads"
     if method == '3':
@@ -73,7 +73,7 @@ def plot_graph():
     ax2.set_ylabel("Utility (fraction)", color="blue", fontsize=14)
     plt.title(title)
 
-    fig.savefig(f"{file_path}/graphs/Method{method}.jpg",
+    fig.savefig(f"{file_path}/graphs/Method{method}.png",
                 format='png', dpi=100, bbox_inches='tight')
 
 

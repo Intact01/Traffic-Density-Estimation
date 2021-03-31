@@ -1,7 +1,6 @@
 #include <bits/stdc++.h>
 
 #include "arg_parser.hpp"
-#include "choice.hpp"
 #include "density.hpp"
 #include "helpers.hpp"
 #include "image_operations.hpp"
@@ -11,11 +10,10 @@
 string videoPath;
 string imagePath;
 Parameters parameters;
-Resolution resolution = {480, 360};
 Density density;
 
-int method = 4;
-int num_threads = 5;
+int method;
+int num_threads;
 
 cv::VideoCapture getImageStream(string videoPath) {
   cv::VideoCapture capture(videoPath);
@@ -42,18 +40,10 @@ void make_csv(vector<double> queue_density_list,
   fout.close();
 }
 
-void jump(cv::VideoCapture &cap, int pos) {
-  while (pos--) {
-    cap.grab();
-  }
-}
-
 void start(vector_point source_pts = scr_pts) {
   density.capture = getImageStream(videoPath);
   density.capture.set(cv::CAP_PROP_FORMAT, CV_32F);
   density.source_points = source_pts;
-
-  initialize(density.capture.get(cv::CAP_PROP_FRAME_COUNT));
 
   parameters.initialize();
 
@@ -78,8 +68,10 @@ void start(vector_point source_pts = scr_pts) {
       break;
     case 0:
       density.method0_qd();
+      break;
     default:
-      density.method0_qd();
+      cout << "Invalid method selected" << endl;
+      return;
   }
 
   parameters.complete();
@@ -110,16 +102,13 @@ bool hasEnding(std::string const &fileName, std::string const &extension) {
 }
 // main function
 int main(int argc, char **argv) {
-  videoPath = "input/trafficvideo.mp4";
-  imagePath = "output/output.png";
-  bool choose = false;
   bool verbose = false;
 
   parameters = Parameters();
 
   int res =
-      parse(argc, argv, imagePath, videoPath, density.fast_forward, choose,
-            method, density.num_threads, logger.enable, density.resolution);
+      parse(argc, argv, imagePath, videoPath, density.fast_forward, method,
+            density.num_threads, logger.enable, density.resolution);
   if (res != 0) return 1;
   std::ifstream file(videoPath);
   if (!file.is_open()) {
@@ -132,11 +121,7 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  if (choose) {
-    getCustomPoints(start);
-  } else {
-    start();
-  }
+  start();
 
   cout << parameters.get_time_elapsed() << endl;
   return 0;

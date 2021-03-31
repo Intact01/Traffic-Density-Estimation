@@ -32,13 +32,13 @@ $ make clean
 >| Flag      | Usage           |
 >| ------------- |:-------------:|
 >| -h, --help                     | produce help message |
->| -f, --file < filepath >    | video filepath      |
->| -s, --save < filepath >    | path to image of saved graph,  *Default : output.png*   |
->| -m, --method< method >      | choose method to apply |
->| -t, --thread < num_thread >  | number of threads (for method 3,4), *Default: 1* |
+>| -f, --file < filepath >    | video filepath, *Default : input/trafficvideo.mp4*      |
+>| -s, --save < filepath >    | path to image of saved graph,  *Default : output/output.png*   |
+>| -m, --method< method >      | choose method to apply,  *Default : 0* |
+>| -t, --thread < num_thread >  | number of threads (for method 3,4), *Default: 4* |
 >| -r, --frameskip < frameskip >    | to process every rth frame (for method 1), *Default : 1*      |
 >| -v, --verbose    | enable logging |
->| -x --resolution  | provide resolution at which to process image (for method 2)
+>| -x, --resolution  | provide resolution at which to process image (for method 2)
 <br/>
 
 ### Argument --method
