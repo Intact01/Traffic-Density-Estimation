@@ -8,13 +8,13 @@
 ``` bash
 $ sudo apt install libboost-program-options-dev
 $ sudo apt install python3.8 python3.8-dev python3-matplotlib python3-numpy
+$ mkdir -p bin
 $ make
 ```  
 *** For Older versions of Ubuntu, replace with appropriate versions of python3 in installation and in makefile
 
 ### Executing 
 ``` bash
-$ mkdir -p bin
 $ bin/main -f trafficvideo.mp4 -m0
 ```  
 More execution options are given below.
@@ -49,7 +49,15 @@ $ make clean
 - *-m4* - Dividing work frame-wise for queue density calculation (Method 4)
 - *-m5* - Sparse optical flow method for moving density calculation (Method 5)
 - *-m6* - Dense optical flow method (baseline) for moving density calculation
+<br>
 
+### Folders' description
+- *src* - Contains all the cpp and header files
+- *input* - Default location for input video file
+- *output* - Contains baseline data (density.csv) and is the default output location for the output graph of traffic density
+- *bin* - Contains executable
+
+<br>
 ### Libraries Used :
 - **OpenCV** - For image and video operations and plotting graph in realtime 
 - **Boost** - For argument parser
