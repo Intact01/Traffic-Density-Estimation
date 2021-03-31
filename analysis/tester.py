@@ -33,7 +33,7 @@ elif method == '2':
     x_label = "scale"
     title = "Method 2 - changing resolution"
 elif method == '4' or method == '3':
-    args_list = [i for i in range(7, 1, -1)]
+    args_list = [i for i in range(10, 1, -1)]
     x_axis_list = args_list + [0]
     args = '-t'
     x_label = "threads"
@@ -47,7 +47,7 @@ def calc(val, m, a):
     cmd = f"{executable} -m{m} {a}{val}"
     print(cmd)
     p = subprocess.Popen(
-        cmd.split(), stdout=subprocess.PIPE, cwd=f"{file_path}/..")
+        cmd.split(), stdout=subprocess.PIPE, cwd=f"{file_path}/../code")
     output, err = p.communicate()
     utility, execution_time = output.split()
     print(utility, execution_time)

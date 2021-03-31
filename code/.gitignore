@@ -1,0 +1,12 @@
+*.jpg
+!empty.jpg
+!traffic.jpg
+*.png
+*.out
+*.o
+.vscode/*
+.idea/*
+*.txt
+*.mp4
+bin/
+doc/

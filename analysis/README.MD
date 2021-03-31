@@ -6,6 +6,7 @@
 ### Executing Tester 
 First build the executable using instructions given in the other README file.
 ``` bash
+$ cd analysis
 $ mkdir -p graphs
 $ python3 tester.py k
 ``` 
