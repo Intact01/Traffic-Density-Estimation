@@ -1,5 +1,6 @@
 import subprocess
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import sys
 import time
 from os import path
@@ -62,6 +63,8 @@ def plot_graph():
 
     print(x_axis_list, time_list, utility_list)
     fig, ax = plt.subplots()
+    if(method != 2):
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     ax.plot(x_axis_list, time_list, color="red", marker="o")
     ax.set_xlabel(x_label, fontsize=14)
     ax.set_ylabel("Runtime (in seconds)", color="red", fontsize=14)
