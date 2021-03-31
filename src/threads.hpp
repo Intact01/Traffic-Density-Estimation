@@ -28,6 +28,8 @@ class ThreadOperations {
   cv::VideoCapture cap;
   bool completed = false;
 
+  cv::Mat frame;
+
   pthread_mutex_t mutex_variable = PTHREAD_MUTEX_INITIALIZER;
   pthread_cond_t Buffer_Queue_Not_Full = PTHREAD_COND_INITIALIZER;
   pthread_cond_t Buffer_Queue_Not_Empty = PTHREAD_COND_INITIALIZER;
@@ -36,6 +38,15 @@ class ThreadOperations {
   void* consumer();
   void* producer_method3();
   void* producer_method4();
+  void* threading_frames_method3(void*);
+};
+
+struct Method3ThreadArgs {
+  int index;
+  bagSub pBSub;
+  cv::Rect crop_rect;
+  cv::Mat frame;
+  double queue_density;
 };
 
 ThreadOperations::ThreadOperations(cv::VideoCapture capture, int num_threads) {
@@ -70,6 +81,8 @@ void* ThreadOperations::consumer() {
   int fidx, tidx;
   while (!completed) {
     pthread_mutex_lock(&mutex_variable);
+
+    // if all frames have been read then release the lock and break
     if (completed) {
       pthread_mutex_unlock(&mutex_variable);
       pthread_cond_signal(&Buffer_Queue_Not_Empty);
@@ -78,12 +91,12 @@ void* ThreadOperations::consumer() {
     if (frame_empty) {
       pthread_cond_wait(&Buffer_Queue_Not_Empty, &mutex_variable);
     }
+
+    // read from buffer
     method_args.frame.copyTo(curr_frame);
     fidx = method_args.frame_index;
     tidx = method_args.thread_index;
     frame_empty = true;
-
-    // logger.log("accept " + to_string(fidx) + " " + to_string(tidx));
 
     pthread_mutex_unlock(&mutex_variable);
     pthread_cond_signal(&Buffer_Queue_Not_Full);
@@ -93,6 +106,8 @@ void* ThreadOperations::consumer() {
       break;
     }
     int total_pixels;
+
+    // in case of method 4 apply camera correction and in case of method 3 crop
     if (tidx == -1) {
       cvtColor(curr_frame, curr_frame, cv::COLOR_BGR2GRAY);
       curr_frame = cameraCorrection(curr_frame, scr_pts, dest_pts);
@@ -151,12 +166,14 @@ void* ThreadOperations::producer_method3() {
   return NULL;
 }
 
+// producer method for threading in approach 4 - frae-wise splits
 void* ThreadOperations::producer_method4() {
   int frame_pos = 0;
 
   cv::Mat curr_frame, modified_frame;
 
   while (!completed) {
+    // acquire lock
     pthread_mutex_lock(&mutex_variable);
     if (!frame_empty) {
       pthread_cond_wait(&Buffer_Queue_Not_Full, &mutex_variable);
@@ -165,10 +182,25 @@ void* ThreadOperations::producer_method4() {
     if (curr_frame.empty()) {
       completed = true;
     }
+    // write to buffer
     method_args = {frame_pos++, -1, curr_frame};
     frame_empty = false;
     pthread_mutex_unlock(&mutex_variable);
     pthread_cond_signal(&Buffer_Queue_Not_Empty);
   }
+  return NULL;
+}
+
+void* threading_frames_method3(void* arguments) {
+  Method3ThreadArgs* args = (Method3ThreadArgs*)arguments;
+  auto [thread_index, pBSub, crop_rect, frame, queue_density] = *args;
+
+  frame = frame(crop_rect);
+
+  int queueSum = processQueue(frame, args->pBSub);
+  int total_pixels = frame.rows * frame.cols;
+
+  args->queue_density = (double)queueSum / total_pixels;
+
   return NULL;
 }

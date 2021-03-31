@@ -14,6 +14,7 @@ $ make
 
 ### Executing 
 ``` bash
+$ mkdir -p bin
 $ bin/main -f trafficvideo.mp4 -m0
 ```  
 More execution options are given below.
@@ -37,7 +38,17 @@ $ make clean
 >| -t, --thread < num_thread >  | number of threads (for method 3,4), *Default: 1* |
 >| -r, --frameskip < frameskip >    | to process every rth frame (for method 1), *Default : 1*      |
 >| -v, --verbose    | enable logging |
+>| -x --resolution  | provide resolution at which to process image (for method 2)
 <br/>
+
+### Argument --method
+- *-m0* - Normal(baseline) method for queue density calculation
+- *-m1* - Subsampling (frameskip) method for queue density calculation ( Method 1)
+- *-m2* - Reduce resolution method for queue density calculation (Method 2)
+- *-m3* - Dividing work spatially for queue density calculation (Method 3)
+- *-m4* - Dividing work frame-wise for queue density calculation (Method 4)
+- *-m5* - Sparse optical flow method for moving density calculation (Method 5)
+- *-m6* - Dense optical flow method (baseline) for moving density calculation
 
 ### Libraries Used :
 - **OpenCV** - For image and video operations and plotting graph in realtime 

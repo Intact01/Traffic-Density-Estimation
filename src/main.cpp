@@ -8,7 +8,6 @@
 #include "parameters.hpp"
 #include "utility.hpp"
 
-int frameskip;
 string videoPath;
 string imagePath;
 Parameters parameters;
@@ -66,7 +65,7 @@ void start(vector_point source_pts = scr_pts) {
       density.method2();
       break;
     case 3:
-      density.method3();
+      density.method3_previous();
       break;
     case 4:
       density.method4();
@@ -79,27 +78,26 @@ void start(vector_point source_pts = scr_pts) {
       break;
     case 0:
       density.method0_qd();
-      break;
     default:
-      return;
+      density.method0_qd();
   }
 
   parameters.complete();
 
   if (method < 5) {
     double utility_queue =
-        find_utility_qd(density.queue_density_list, frameskip);
+        find_utility_qd(density.queue_density_list, density.fast_forward);
     logger.log("Utility is: " + to_string(utility_queue));
     cout << utility_queue << endl;
   } else {
     double utility_moving =
-        find_utility_md(density.moving_density_list, frameskip);
+        find_utility_md(density.moving_density_list, density.fast_forward);
     logger.log("Utility is: " + to_string(utility_moving));
     cout << utility_moving << endl;
   }
 
   make_graph(density.queue_density_list, density.moving_density_list, imagePath,
-             frameskip);
+             density.fast_forward);
   // make_csv(queue_density_list, moving_density_list);
 }
 bool hasEnding(std::string const &fileName, std::string const &extension) {
@@ -112,7 +110,6 @@ bool hasEnding(std::string const &fileName, std::string const &extension) {
 }
 // main function
 int main(int argc, char **argv) {
-  frameskip = 1;
   videoPath = "input/trafficvideo.mp4";
   imagePath = "output/output.png";
   bool choose = false;

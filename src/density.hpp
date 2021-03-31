@@ -26,6 +26,7 @@ class Density {
   void method1();
   void method2();
   void method3();
+  void method3_previous();
   void method4();
   void method5();
 };
@@ -191,11 +192,11 @@ void Density::method2() {
     counter++;
   }
 }
-void Density::method3() {
-  if (num_threads == 0) {
-    method0_qd();
-    return;
-  }
+void Density::method3_previous() {
+if (num_threads == 0) {
+  method0_qd();
+  return;
+}
   pthread_t consumer_threads[num_threads];
   pthread_t producer_thread;
 
@@ -209,7 +210,8 @@ void Density::method3() {
 
   for (int i = 0; i < num_threads; i++) {
     int rc = pthread_create(&consumer_threads[i], NULL,
-                            (THREADFUNCPTR)&ThreadOperations::consumer, th_op);
+                            (THREADFUNCPTR)&ThreadOperations::consumer,
+                            th_op);
     if (rc) {
       cout << "Error:unable to create thread," << rc << endl;
       exit(-1);
@@ -228,6 +230,62 @@ void Density::method3() {
     }
     queue_density_list.push_back(density);
     logger.log(to_string(i) + " " + to_string(density));
+  }
+}
+
+void Density::method3() {
+  if (num_threads == 0) {
+    method0_qd();
+    return;
+  }
+  num_threads++;
+  pthread_t threads[num_threads];
+
+  ThreadOperations *th_op = new ThreadOperations(capture, num_threads);
+
+  vector<Method3ThreadArgs> args_array;
+  for (int i = 0; i < num_threads; i++) {
+    // Method3ThreadArgs args = {i, 0.0, th_op};
+
+    cv::Mat frame;
+    Method3ThreadArgs args{i, cv::createBackgroundSubtractorMOG2(),
+                           th_op->rects[i], frame, 0.0};
+    args_array.push_back(args);
+  }
+
+  int counter = 0;
+
+  while (true) {
+    cv::Mat frame;
+    th_op->cap >> frame;
+
+    if (frame.empty()) break;
+    cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    frame = cameraCorrection(frame, source_points, dest_pts);
+
+    for (int i = 0; i < num_threads; i++) {
+      args_array[i].frame = frame;
+      int rc = pthread_create(&threads[i], NULL, threading_frames_method3,
+                              (void *)(&args_array[i]));
+      if (rc) {
+        cout << "Error:unable to create thread," << rc << endl;
+        exit(-1);
+      }
+    }
+
+    double total_queue_density = 0;
+    for (int i = 0; i < num_threads; i++) {
+      pthread_join(threads[i], NULL);
+      total_queue_density += args_array[i].queue_density;
+    }
+    total_queue_density /= num_threads;
+    queue_density_list.push_back(total_queue_density);
+
+    // stringstream ss;
+    // ss << counter << " " << total_queue_density;
+    // logger.log(ss.str());
+
+    counter++;
   }
 }
 

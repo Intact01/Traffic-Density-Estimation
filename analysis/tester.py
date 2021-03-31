@@ -32,8 +32,8 @@ elif method == '2':
     x_label = "scale"
     title = "Method 2 - changing resolution"
 elif method == '4' or method == '3':
-    args_list = [i for i in range(2, 8)]
-    x_axis_list = [0] + [i+1 for i in args_list]
+    args_list = [i for i in range(7, 1, -1)]
+    x_axis_list = [i+1 for i in args_list] + [0]
     args = '-t'
     x_label = "threads"
     if method == '3':
@@ -55,11 +55,10 @@ def calc(val, m, a):
 
 
 def plot_graph():
-    if method == '3' or method == '4':
-        calc("", 0, "")
-
     for x_val in args_list:
         calc(x_val, method, args)
+    if method == '3' or method == '4':
+        calc("", 0, "")
 
     print(x_axis_list, time_list, utility_list)
     fig, ax = plt.subplots()
