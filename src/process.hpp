@@ -18,10 +18,8 @@ int processQueue(cv::Mat frame, bagSub pBackSub) {
       cv::MORPH_RECT, cv::Size(2 * dilation_size + 1, 2 * dilation_size + 1),
       cv::Point(dilation_size, dilation_size));
 
-  // mtx.lock();
   pBackSub->apply(frame, fgMask, 0);
   fgMask.copyTo(frame1);
-  // mtx.unlock();
 
   // successive erosion and dilation to fill holes in parse
   cv::Mat thresh;
@@ -36,7 +34,6 @@ int processQueue(cv::Mat frame, bagSub pBackSub) {
   cv::threshold(frame1, frame1, 127, 255, cv::THRESH_BINARY);
   int val = cv::countNonZero(frame1);
 
-  // cv::waitKey(30);
   return val;
 }
 
@@ -50,6 +47,7 @@ int processMotion(cv::Mat frame, cv::Mat prvs, cv::Mat &next) {
   cv::Mat element1 = cv::getStructuringElement(
       cv::MORPH_RECT, cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
       cv::Point(erosion_size, erosion_size));
+
   // calculate optical flow
   cv::Mat flow(prvs.size(), CV_32FC2);
   cv::calcOpticalFlowFarneback(prvs, next, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
@@ -117,7 +115,7 @@ int processMotionSparse(cv::Mat prvs, cv::Mat frame) {
       circle(frame, p1[i], 5, BLACK, -1);
     }
   }
-  // imshow("undilated", mask);
+
   cv::dilate(mask, mask, element2);
   cv::dilate(mask, mask, element2);
   cv::dilate(mask, mask, element2);
@@ -126,9 +124,6 @@ int processMotionSparse(cv::Mat prvs, cv::Mat frame) {
   cv::dilate(mask, mask, element2);
 
   cvtColor(mask, mask, cv::COLOR_BGR2GRAY);
-  // imshow("prvs", prvs);
-  // imshow("frame", frame);
-  // imshow("mask", mask);
-  // cv::waitKey(500);
+
   return cv::countNonZero(mask);
 }

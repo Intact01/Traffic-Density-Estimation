@@ -12,6 +12,8 @@ int frameskip;
 string videoPath;
 string imagePath;
 Parameters parameters;
+Resolution resolution = {480, 360};
+Density density;
 
 int method = 4;
 int num_threads = 5;
@@ -48,76 +50,56 @@ void jump(cv::VideoCapture &cap, int pos) {
 }
 
 void start(vector_point source_pts = scr_pts) {
-  cv::VideoCapture capture = getImageStream(videoPath);
-  capture.set(cv::CAP_PROP_FORMAT, CV_32F);
+  density.capture = getImageStream(videoPath);
+  density.capture.set(cv::CAP_PROP_FORMAT, CV_32F);
+  density.source_points = source_pts;
 
-  // cout << capture.get(cv::CAP_PROP_FPS);
-
-  vector<double> queue_density_list, moving_density_list;
-
-  initialize(capture.get(cv::CAP_PROP_FRAME_COUNT));
+  initialize(density.capture.get(cv::CAP_PROP_FRAME_COUNT));
 
   parameters.initialize();
 
   switch (method) {
     case 1:
-      method1(queue_density_list, capture, source_pts, frameskip);
+      density.method1();
       break;
     case 2:
-      method2(queue_density_list, capture, source_pts);
+      density.method2();
       break;
     case 3:
-      method3(queue_density_list, capture, source_pts, num_threads);
+      density.method3();
       break;
-    case 4: {
-      // cv::Mat frame;
-      // vector<cv::VideoCapture> captures;
-      // captures.push_back(getImageStream(videoPath));
-      // captures[0].set(cv::CAP_PROP_FORMAT, CV_32F);
-      // int num_frames = captures[0].get(cv::CAP_PROP_FRAME_COUNT);
-
-      // for (int i = 0; i < num_threads; i++) {
-      //   cv::VideoCapture cap = getImageStream(videoPath);
-      //   int frames_per_thread = ceil((double)(num_frames - 501) /
-      //   num_threads); cap.set(cv::CAP_PROP_FORMAT, CV_32F); jump(cap, 501 + i
-      //   * frames_per_thread);
-      //   // cap.set(cv::CAP_PROP_POS_FRAMES, 501 + i * frames_per_thread);
-      //   captures.push_back(cap);
-      // }
-
-      // captures[0] >> frame;
-
-      parameters.initialize();
-      method4(queue_density_list, capture, source_pts, num_threads);
+    case 4:
+      density.method4();
       break;
-    }
     case 5:
-      method5(moving_density_list, capture, source_pts);
+      density.method5();
       break;
     case 6:
-      method0_md(moving_density_list, capture, source_pts);
+      density.method0_md();
       break;
     case 0:
-      method0(queue_density_list, capture, source_pts);
+      density.method0_qd();
       break;
     default:
-      // cout << "Go read the documentation" << endl;
       return;
   }
 
   parameters.complete();
 
   if (method < 5) {
-    double utility_queue = find_utility_qd(queue_density_list, frameskip);
+    double utility_queue =
+        find_utility_qd(density.queue_density_list, frameskip);
     logger.log("Utility is: " + to_string(utility_queue));
     cout << utility_queue << endl;
   } else {
-    double utility_moving = find_utility_md(moving_density_list, frameskip);
+    double utility_moving =
+        find_utility_md(density.moving_density_list, frameskip);
     logger.log("Utility is: " + to_string(utility_moving));
     cout << utility_moving << endl;
   }
 
-  make_graph(queue_density_list, moving_density_list, imagePath, frameskip);
+  make_graph(density.queue_density_list, density.moving_density_list, imagePath,
+             frameskip);
   // make_csv(queue_density_list, moving_density_list);
 }
 bool hasEnding(std::string const &fileName, std::string const &extension) {
@@ -138,11 +120,10 @@ int main(int argc, char **argv) {
 
   parameters = Parameters();
 
-  parse(argc, argv, imagePath, videoPath, frameskip, choose, method,
-        num_threads, logger.enable);
-
-  // cout << logger.enable << endl;
-
+  int res =
+      parse(argc, argv, imagePath, videoPath, density.fast_forward, choose,
+            method, density.num_threads, logger.enable, density.resolution);
+  if (res != 0) return 1;
   std::ifstream file(videoPath);
   if (!file.is_open()) {
     std::cout << "File not found. Aborting" << std::endl;
@@ -160,7 +141,6 @@ int main(int argc, char **argv) {
     start();
   }
 
-  // cout << "time elapsed: " << parameters.get_time_elapsed() << endl;
   cout << parameters.get_time_elapsed() << endl;
   return 0;
 }

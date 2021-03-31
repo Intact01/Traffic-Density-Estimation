@@ -14,8 +14,7 @@ double find_utility_qd(vector<double> queue_density, int frameskip) {
   while (fin >> line) {
     stringstream sstream(line);
     while (getline(sstream, word, comma)) {
-      // add all the column data
-      // of a row to a vector
+      // add all the column data of a row to a vector
       row.push_back(word);
     }
     if (counter % frameskip != 0) {

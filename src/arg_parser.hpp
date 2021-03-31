@@ -12,6 +12,7 @@ const string choose_section_opt = "choose";
 const string choose_method_opt = "method";
 const string num_threads_opt = "thread";
 const string verbose_opt = "verbose";
+const string resolution_opt = "resolution";
 
 const char *help_opt_name = "help,h";
 const char *video_path_opt_name = "file,f";
@@ -21,23 +22,33 @@ const char *choose_section_opt_name = "choose,c";
 const char *choose_method_opt_name = "method,m";
 const char *num_threads_opt_name = "thread,t";
 const char *verbose_opt_name = "verbose,v";
+const char *resolution_opt_name = "resolution,x";
 
 const string wrong_usage_msg = "Wrong usage: Use -h, --help for help";
 
+struct Resolution {
+  int width = 1920;
+  int height = 1080;
+};
+
 // parses the command line args
-void parse(int argc, char **argv, string &imagePath, string &videoPath,
+int parse(int argc, char **argv, string &imagePath, string &videoPath,
            int &frameskip, bool &choose, int &method, int &num_threads,
-           bool &verbose) {
-  // allowed options' description
+           bool &verbose, Resolution &res) {
+  string resolution;
   po::options_description desc("Allowed options");
+
+  // allowed options' description
   desc.add_options()(help_opt_name, "produce help message")(
-      video_path_opt_name, po::value<string>(&videoPath), "video path")(
-      image_path_opt_name, po::value<string>(&imagePath),"path to image of saved graph")(
-      frame_rate_opt_name, po::value<int>(&frameskip),"frames to skip processing")(
-      choose_section_opt_name, "enter custom area to crop")(
-      choose_method_opt_name, po::value<int>(&method),"choose method to apply")(
-      verbose_opt_name, "enable logging")(
-      num_threads_opt_name, po::value<int>(&num_threads), "number of threads");
+    video_path_opt_name, po::value<string>(&videoPath), "video path")(
+    image_path_opt_name, po::value<string>(&imagePath),"path to image of saved graph")(
+    frame_rate_opt_name,po::value<int>(&frameskip),"frames to skip processing (only for method 1)")(
+    choose_section_opt_name, "enter custom area to crop")(
+    choose_method_opt_name, po::value<int>(&method),"choose method to apply")(
+    verbose_opt_name, "enable logging")(
+    num_threads_opt_name, po::value<int>(&num_threads), "number of threads (only for methods 3,4)")(
+    resolution_opt_name, po::value<string>(&resolution),"resolution for method 2 eg - 1920x1080 (only for method 2)");
+
 
   string fileName;
   try {
@@ -58,9 +69,28 @@ void parse(int argc, char **argv, string &imagePath, string &videoPath,
     if (variable_map.count(verbose_opt)) {
       verbose = true;
     }
-  } catch (const po::error &ex) {
+    if (variable_map.count(resolution_opt)) {
+      int idx = resolution.find('x');
+      if (idx == string::npos)
+        cout << "wrong resolution format";
+      else {
+        res.height = stoi(resolution.substr(0, idx));
+        res.width = stoi(resolution.substr(idx + 1));
+      }
+    }
+
+    if (frameskip <= 0) {
+      cout << "frameskip has to be positive" << endl;
+      return 1;
+    }
+    if (num_threads <= 0) {
+      cout << "number of threads has to be positive" << endl;
+      return 1;
+    }
+    num_threads--;
+  } catch (exception &ex) {
     std::cerr << ex.what() << '\n';
     exit(0);
   }
-  return;
+  return 0;
 }

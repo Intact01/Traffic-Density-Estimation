@@ -1,4 +1,6 @@
 #pragma once
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpmf-conversions"
 
 #include <bits/stdc++.h>
 
@@ -9,50 +11,26 @@
 #include "properties.hpp"
 #include "threads.hpp"
 
-// #define NUM_THREADS 5
+class Density {
+ public:
+  vector<double> queue_density_list;
+  vector<double> moving_density_list;
+  cv::VideoCapture capture;
+  vector_point source_points;
+  int fast_forward = 1;
+  int num_threads = 1;
+  Resolution resolution;
 
-vector<double> qd_list;
-vector_point src_pts;
-int total_pixels = -1;
-int frame_index = 0;
-int global_num_threads;
+  void method0_qd();
+  void method0_md();
+  void method1();
+  void method2();
+  void method3();
+  void method4();
+  void method5();
+};
 
-// void *threading_frames(void *arguments) {
-//   cv::Mat frame;
-//   Method4ThreadArgs *args = (Method4ThreadArgs *)arguments;
-//   auto [rem, pBSub, capture] = *args;
-//   int frames_per_thread =
-//       ceil((double)(capture.get(cv::CAP_PROP_FRAME_COUNT) - 501) /
-//            global_num_threads);
-
-//   int curr_index = 500 + rem * frames_per_thread;
-//   int temp = capture.get(cv::CAP_PROP_POS_FRAMES);
-//   while (true) {
-//     capture >> frame;
-
-//     if (curr_index >= 500 + (rem + 1) * frames_per_thread || frame.empty())
-//       break;
-
-//     cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-//     frame = cameraCorrection(frame, src_pts, dest_pts);
-//     int queueSum = processQueue(frame, args->pBSub);
-//     if (total_pixels == -1) {
-//       total_pixels = frame.rows * frame.cols;
-//     }
-//     double queue_density = (double)queueSum / total_pixels;
-//     qd_list[curr_index] = queue_density;
-
-//     stringstream ss;
-//     ss << curr_index << " " << qd_list[curr_index];
-//     logger.log(ss.str());
-
-//     curr_index++;
-//   }
-//   return NULL;
-// }
-
-void method0(vector<double> &queue_density_list, cv::VideoCapture capture,
-             vector_point source_points) {
+void Density::method0_qd() {
   cv::Mat frame;
   capture >> frame;  // capture the first frame
 
@@ -85,44 +63,7 @@ void method0(vector<double> &queue_density_list, cv::VideoCapture capture,
   }
 }
 
-void method1(vector<double> &queue_density_list, cv::VideoCapture capture,
-             vector_point source_points, int fast_forward = 1) {
-  cv::Mat frame;
-  capture >> frame;  // capture the first frame
-
-  int counter = 0;
-  frame = cameraCorrection(frame, source_points, dest_pts);
-  int total_pixels = frame.rows * frame.cols;
-  // cout << total_pixels << endl;
-  bagSub pBackSub1;
-  pBackSub1 =
-      cv::createBackgroundSubtractorMOG2();  // to create background subtractor
-
-  while (capture.grab()) {
-    if (counter % fast_forward != 0) {
-      counter++;
-      continue;
-    }
-    capture.retrieve(frame);
-
-    // convert to greyscale and correct the camera angle
-    cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-    frame = cameraCorrection(frame, source_points, dest_pts);
-    // update queue density list
-    int queueSum = processQueue(frame, pBackSub1);
-    double queue_density = (double)queueSum / total_pixels;
-    queue_density_list.push_back(queue_density);
-
-    stringstream ss;
-    ss << left << setw(10) << (counter) << left << setw(10) << queue_density
-       << left;
-    logger.log(ss.str());
-    counter++;
-  }
-}
-
-void method0_md(vector<double> &moving_density_list, cv::VideoCapture capture,
-                vector_point source_points) {
+void Density::method0_md() {
   cv::Mat frame, prvs, next;
   capture >> frame;  // capture the first frame
 
@@ -172,10 +113,44 @@ void method0_md(vector<double> &moving_density_list, cv::VideoCapture capture,
   }
 }
 
-void method2(vector<double> &queue_density_list, cv::VideoCapture capture,
-             vector_point source_points, int width = 480, int height = 360) {
+void Density::method1() {
   cv::Mat frame;
   capture >> frame;  // capture the first frame
+
+  int counter = 0;
+  frame = cameraCorrection(frame, source_points, dest_pts);
+  int total_pixels = frame.rows * frame.cols;
+  bagSub pBackSub1;
+  pBackSub1 =
+      cv::createBackgroundSubtractorMOG2();  // to create background subtractor
+
+  while (capture.grab()) {
+    if (counter % fast_forward != 0) {
+      counter++;
+      continue;
+    }
+    capture.retrieve(frame);
+
+    // convert to greyscale and correct the camera angle
+    cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    frame = cameraCorrection(frame, source_points, dest_pts);
+    // update queue density list
+    int queueSum = processQueue(frame, pBackSub1);
+    double queue_density = (double)queueSum / total_pixels;
+    queue_density_list.push_back(queue_density);
+
+    stringstream ss;
+    ss << left << setw(10) << (counter) << left << setw(10) << queue_density
+       << left;
+    logger.log(ss.str());
+    counter++;
+  }
+}
+
+void Density::method2() {
+  cv::Mat frame;
+  capture >> frame;  // capture the first frame
+  auto [width, height] = resolution;
 
   int counter = 0;
   for (int i = 0; i < 4; i++) {
@@ -194,7 +169,6 @@ void method2(vector<double> &queue_density_list, cv::VideoCapture capture,
   cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
   frame = cameraCorrection(frame, source_points, dest_pts);
   int total_pixels = frame.rows * frame.cols;
-  // cout << total_pixels << endl;
   bagSub pBackSub1;
   pBackSub1 = cv::createBackgroundSubtractorMOG2();  // to create background
                                                      // subtractor
@@ -212,20 +186,23 @@ void method2(vector<double> &queue_density_list, cv::VideoCapture capture,
     queue_density_list.push_back(queue_density);
 
     stringstream ss;
-    ss << counter << queue_density;
+    ss << counter << " " << queue_density;
     logger.log(ss.str());
     counter++;
   }
 }
-void method3(vector<double> &queue_density_list, cv::VideoCapture local_capture,
-             vector_point source_points, int num_threads) {
+void Density::method3() {
+  if (num_threads == 0) {
+    method0_qd();
+    return;
+  }
   pthread_t consumer_threads[num_threads];
   pthread_t producer_thread;
 
-  src_pts = source_points;
-  local_capture.set(cv::CAP_PROP_FORMAT, CV_32F);
+  capture.set(cv::CAP_PROP_FORMAT, CV_32F);
 
-  ThreadOperations *th_op = new ThreadOperations(local_capture, num_threads);
+  ThreadOperations *th_op = new ThreadOperations(capture, num_threads);
+  th_op->src_pts = source_points;
 
   pthread_create(&producer_thread, NULL,
                  (THREADFUNCPTR)&ThreadOperations::producer_method3, th_op);
@@ -254,15 +231,19 @@ void method3(vector<double> &queue_density_list, cv::VideoCapture local_capture,
   }
 }
 
-void method4(vector<double> &queue_density_list, cv::VideoCapture local_capture,
-             vector_point source_points, int num_threads) {
+void Density::method4() {
+  cout << num_threads << endl;
+  if (num_threads == 0) {
+    method0_qd();
+    return;
+  }
   pthread_t consumer_threads[num_threads];
   pthread_t producer_thread;
 
-  src_pts = source_points;
-  local_capture.set(cv::CAP_PROP_FORMAT, CV_32F);
+  capture.set(cv::CAP_PROP_FORMAT, CV_32F);
 
-  ThreadOperations *th_op = new ThreadOperations(local_capture, num_threads);
+  ThreadOperations *th_op = new ThreadOperations(capture, num_threads);
+  th_op->src_pts = source_points;
 
   pthread_create(&producer_thread, NULL,
                  (THREADFUNCPTR)&ThreadOperations::producer_method4, th_op);
@@ -281,15 +262,12 @@ void method4(vector<double> &queue_density_list, cv::VideoCapture local_capture,
     pthread_join(consumer_threads[i], NULL);
   }
 
-  // int i = 0;
   for (auto density : th_op->qd_list) {
     queue_density_list.push_back(density);
-    // logger.log(to_string(i++) + " " + to_string(density));
   }
 }
 
-void method5(vector<double> &moving_density_list, cv::VideoCapture capture,
-             vector_point source_points) {
+void Density::method5() {
   cv::Mat prvs, prvs_gray;
   // Take first frame and find corners in it
   capture >> prvs;
@@ -319,3 +297,5 @@ void method5(vector<double> &moving_density_list, cv::VideoCapture capture,
     counter++;
   }
 }
+
+#pragma GCC diagnostic pop

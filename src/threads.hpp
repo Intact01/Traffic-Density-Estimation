@@ -7,13 +7,7 @@
 #include "process.hpp"
 #include "properties.hpp"
 
-struct Method4ThreadArgs {
-  int rem;
-  bagSub pBSub;
-  cv::VideoCapture curr_capture;
-};
-
-struct Method3ThreadArgs {
+struct ThreadArgs {
   int frame_index;
   int thread_index;
   cv::Mat frame;
@@ -22,16 +16,18 @@ struct Method3ThreadArgs {
 class ThreadOperations {
  public:
   int num_threads;
-  Method3ThreadArgs method_args;
+  ThreadArgs method_args;
   bool frame_empty = true;
   bagSub sub;
   vector<double> qd_list;
   vector<bagSub> bag_subs;
   vector<vector<double>> qd_lists;
+  vector_point src_pts;
 
   vector<cv::Rect> rects;
   cv::VideoCapture cap;
   bool completed = false;
+
   pthread_mutex_t mutex_variable = PTHREAD_MUTEX_INITIALIZER;
   pthread_cond_t Buffer_Queue_Not_Full = PTHREAD_COND_INITIALIZER;
   pthread_cond_t Buffer_Queue_Not_Empty = PTHREAD_COND_INITIALIZER;
@@ -87,7 +83,7 @@ void* ThreadOperations::consumer() {
     tidx = method_args.thread_index;
     frame_empty = true;
 
-    logger.log("accept " + to_string(fidx) + " " + to_string(tidx));
+    // logger.log("accept " + to_string(fidx) + " " + to_string(tidx));
 
     pthread_mutex_unlock(&mutex_variable);
     pthread_cond_signal(&Buffer_Queue_Not_Full);
@@ -142,11 +138,15 @@ void* ThreadOperations::producer_method3() {
     if (!frame_empty && !completed) {
       pthread_cond_wait(&Buffer_Queue_Not_Full, &mutex_variable);
     }
-    method_args = {frame_pos, thread_pos++, curr_frame};
-    logger.log("added " + to_string(frame_pos) + " " + to_string(thread_pos));
+    if (thread_pos == 0)
+      method_args = {frame_pos, thread_pos, curr_frame};
+    else
+      method_args.thread_index = thread_pos;
+
     frame_empty = false;
     pthread_mutex_unlock(&mutex_variable);
     pthread_cond_signal(&Buffer_Queue_Not_Empty);
+    thread_pos++;
   }
   return NULL;
 }

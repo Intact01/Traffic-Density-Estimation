@@ -4,6 +4,8 @@
 
 namespace chr = std::chrono;
 
+// This is to keep track of the runtime parameters.
+// Currently only execution time is measured
 class Parameters {
  private:
   chr::_V2::system_clock::time_point start_time;

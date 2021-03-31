@@ -6,6 +6,9 @@
 
 using namespace std;
 
+// This contains all type definitions and constant that are required throughout
+// the project
+
 typedef std::vector<cv::Point2f> vector_point;
 typedef cv::Point2f Pt;
 typedef cv::Ptr<cv::BackgroundSubtractor> bagSub;
