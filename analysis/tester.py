@@ -32,7 +32,7 @@ elif method == '2':
     x_label = "scale"
     title = "Method 2 - changing resolution"
 elif method == '4' or method == '3':
-    args_list = [i for i in range(1, 8)]
+    args_list = [i for i in range(2, 8)]
     x_axis_list = [0] + [i+1 for i in args_list]
     args = '-t'
     x_label = "threads"
