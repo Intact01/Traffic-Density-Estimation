@@ -10,7 +10,7 @@ double find_utility_qd(vector<double> queue_density, int frameskip) {
   int counter = 0, index = 0;
   string temp, line, word;
   getline(fin, line);
-  double qd_base, qd, error_qd, total_error, max_error;
+  double qd_base, qd, error_qd, total_error = 0.0, max_error;
   while (fin >> line) {
     stringstream sstream(line);
     while (getline(sstream, word, comma)) {
@@ -33,10 +33,12 @@ double find_utility_qd(vector<double> queue_density, int frameskip) {
     logger.log(to_string(counter) + " " + to_string(error_qd));
 
     total_error += pow(error_qd, 2);
+    logger.log("Error :" + to_string(total_error));
+
     row.clear();
     counter++;
   }
-  // cout << total_error << endl;
+  logger.log("Error :" + to_string(total_error) + " " + to_string(counter));
   total_error = pow((abs(total_error) / counter), 0.5);
   // cout << total_error << endl;
   double utility = 1 - total_error;

@@ -120,22 +120,24 @@ void* ThreadOperations::consumer() {
 }
 
 void* ThreadOperations::producer_method3() {
-  int thread_pos = num_threads, frame_pos = 0;
+  int thread_pos = num_threads, frame_pos = -1;
   cv::Mat curr_frame, modified_frame;
 
   while (!completed) {
-    pthread_mutex_lock(&mutex_variable);
-
+    // pthread_mutex_lock(&mutex_variable);
     if (thread_pos == num_threads) {
       cap >> curr_frame;
-      if (curr_frame.empty()) {
-        completed = true;
-      } else {
+      frame_pos++;
+      if (!curr_frame.empty()) {
+        thread_pos = 0;
         cvtColor(curr_frame, curr_frame, cv::COLOR_BGR2GRAY);
         curr_frame = cameraCorrection(curr_frame, scr_pts, dest_pts);
       }
-      frame_pos++;
-      thread_pos = 0;
+    }
+
+    pthread_mutex_lock(&mutex_variable);
+    if (curr_frame.empty()) {
+      completed = true;
     }
     if (!frame_empty && !completed) {
       pthread_cond_wait(&Buffer_Queue_Not_Full, &mutex_variable);
