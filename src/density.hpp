@@ -39,7 +39,6 @@ void Density::method0_qd() {
   cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
   frame = cameraCorrection(frame, source_points, dest_pts);
   int total_pixels = frame.rows * frame.cols;
-  // cout << total_pixels << endl;
   bagSub pBackSub1;
   pBackSub1 =
       cv::createBackgroundSubtractorMOG2();  // to create background subtractor
@@ -192,7 +191,7 @@ void Density::method2() {
     counter++;
   }
 }
-void Density::method3_previous() {
+void Density::method3() {
   if (num_threads == 0) {
     method0_qd();
     return;
@@ -205,9 +204,11 @@ void Density::method3_previous() {
   ThreadOperations *th_op = new ThreadOperations(capture, num_threads);
   th_op->src_pts = source_points;
 
+  // spawn producer thread
   pthread_create(&producer_thread, NULL,
                  (THREADFUNCPTR)&ThreadOperations::producer_method3, th_op);
 
+  // spawn consumer threads
   for (int i = 0; i < num_threads; i++) {
     int rc = pthread_create(&consumer_threads[i], NULL,
                             (THREADFUNCPTR)&ThreadOperations::consumer, th_op);
@@ -222,6 +223,7 @@ void Density::method3_previous() {
     pthread_join(consumer_threads[i], NULL);
   }
 
+  // combine density from all qd_lists
   for (int i = 0; i < th_op->qd_lists[0].size(); i++) {
     double density = 0;
     for (int j = 0; j < num_threads; j++) {
@@ -232,7 +234,8 @@ void Density::method3_previous() {
   }
 }
 
-void Density::method3() {
+// older implementation of method 3
+void Density::method3_previous() {
   if (num_threads == 0) {
     method0_qd();
     return;
@@ -260,10 +263,9 @@ void Density::method3() {
 
     if (frame.empty()) break;
     cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-    frame = cameraCorrection(frame, source_points, dest_pts);
+    ThreadOperations::frame = cameraCorrection(frame, source_points, dest_pts);
 
     for (int i = 0; i < num_threads; i++) {
-      args_array[i].frame = frame;
       int rc = pthread_create(&threads[i], NULL, threading_frames_method3,
                               (void *)(&args_array[i]));
       if (rc) {
@@ -280,15 +282,16 @@ void Density::method3() {
     total_queue_density /= num_threads;
     queue_density_list.push_back(total_queue_density);
 
-    // stringstream ss;
-    // ss << counter << " " << total_queue_density;
-    // logger.log(ss.str());
+    stringstream ss;
+    ss << counter << " " << total_queue_density;
+    logger.log(ss.str());
 
     counter++;
   }
 }
 
 void Density::method4() {
+  // if number of threads is 0, redirect to method 0
   if (num_threads == 0) {
     method0_qd();
     return;

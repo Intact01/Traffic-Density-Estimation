@@ -39,7 +39,6 @@ double find_utility_qd(vector<double> queue_density, int frameskip) {
   }
   logger.log("Error :" + to_string(total_error) + " " + to_string(counter));
   total_error = pow((abs(total_error) / counter), 0.5);
-  // cout << total_error << endl;
   double utility = 1 - total_error;
   logger.log("Util :" + to_string(utility));
   return utility;
@@ -74,7 +73,6 @@ double find_utility_md(vector<double> moving_density, int frameskip) {
     error_md = md - md_base;
     max_error = max(md_base, 1 - md_base);
     error_md = error_md / max_error;
-    // cout << error_md << endl;
     total_error += pow(error_md, 2);
     row.clear();
     counter++;

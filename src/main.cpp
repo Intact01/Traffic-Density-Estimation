@@ -55,7 +55,7 @@ void start(vector_point source_pts = scr_pts) {
       density.method2();
       break;
     case 3:
-      density.method3_previous();
+      density.method3();
       break;
     case 4:
       density.method4();

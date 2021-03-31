@@ -28,7 +28,8 @@ class ThreadOperations {
   cv::VideoCapture cap;
   bool completed = false;
 
-  cv::Mat frame;
+  static cv::Mat frame;
+  static int total_pixels;
 
   pthread_mutex_t mutex_variable = PTHREAD_MUTEX_INITIALIZER;
   pthread_cond_t Buffer_Queue_Not_Full = PTHREAD_COND_INITIALIZER;
@@ -49,6 +50,10 @@ struct Method3ThreadArgs {
   double queue_density;
 };
 
+cv::Mat ThreadOperations::frame;
+int ThreadOperations::total_pixels = -1;
+
+// Constructor that initializes all class and object variables
 ThreadOperations::ThreadOperations(cv::VideoCapture capture, int num_threads) {
   cap = capture;
   this->num_threads = num_threads;
@@ -57,6 +62,7 @@ ThreadOperations::ThreadOperations(cv::VideoCapture capture, int num_threads) {
   cvtColor(dummy_frame, dummy_frame, cv::COLOR_BGR2GRAY);
   dummy_frame = cameraCorrection(dummy_frame, scr_pts, dest_pts);
 
+  // create lists of rectangles and background subtractors
   for (int i = 0; i < num_threads; i++) {
     cv::Rect rect;
 
@@ -135,12 +141,13 @@ void* ThreadOperations::producer_method3() {
   cv::Mat curr_frame, modified_frame;
 
   while (!completed) {
-    // pthread_mutex_lock(&mutex_variable);
+    // after all sections of current image are processed retrieve new image from
+    // capture
     if (thread_pos == num_threads) {
       cap >> curr_frame;
       frame_pos++;
+      thread_pos = 0;
       if (!curr_frame.empty()) {
-        thread_pos = 0;
         cvtColor(curr_frame, curr_frame, cv::COLOR_BGR2GRAY);
         curr_frame = cameraCorrection(curr_frame, scr_pts, dest_pts);
       }
@@ -148,17 +155,23 @@ void* ThreadOperations::producer_method3() {
 
     pthread_mutex_lock(&mutex_variable);
     if (curr_frame.empty()) {
+      // set flag completed to ensure other consumers and current producer do
+      // not have further iterations
       completed = true;
     }
+    // if buffer is occupied, wait till buffer is read by some consumer
     if (!frame_empty && !completed) {
       pthread_cond_wait(&Buffer_Queue_Not_Full, &mutex_variable);
     }
+
     if (thread_pos == 0)
       method_args = {frame_pos, thread_pos, curr_frame};
     else
       method_args.thread_index = thread_pos;
 
     frame_empty = false;
+
+    // remove lock and send signal to consumers to read buffer
     pthread_mutex_unlock(&mutex_variable);
     pthread_cond_signal(&Buffer_Queue_Not_Empty);
     thread_pos++;
@@ -166,7 +179,7 @@ void* ThreadOperations::producer_method3() {
   return NULL;
 }
 
-// producer method for threading in approach 4 - frae-wise splits
+// producer method for threading in approach 4 - frame-wise splits
 void* ThreadOperations::producer_method4() {
   int frame_pos = 0;
 
@@ -191,16 +204,18 @@ void* ThreadOperations::producer_method4() {
   return NULL;
 }
 
+// alternate implementation of method 3 threading
 void* threading_frames_method3(void* arguments) {
   Method3ThreadArgs* args = (Method3ThreadArgs*)arguments;
-  auto [thread_index, pBSub, crop_rect, frame, queue_density] = *args;
 
-  frame = frame(crop_rect);
+  cv::Mat frame = ThreadOperations::frame;
+  frame = frame(args->crop_rect);
 
   int queueSum = processQueue(frame, args->pBSub);
-  int total_pixels = frame.rows * frame.cols;
-
-  args->queue_density = (double)queueSum / total_pixels;
+  if (ThreadOperations::total_pixels == -1) {
+    ThreadOperations::total_pixels = frame.rows * frame.cols;
+  }
+  args->queue_density = (double)queueSum / ThreadOperations::total_pixels;
 
   return NULL;
 }
