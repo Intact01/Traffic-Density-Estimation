@@ -41,12 +41,14 @@ void make_csv(vector<double> queue_density_list,
 }
 
 void start(vector_point source_pts = scr_pts) {
+  // assign attributes of density class
   density.capture = getImageStream(videoPath);
   density.capture.set(cv::CAP_PROP_FORMAT, CV_32F);
   density.source_points = source_pts;
 
-  parameters.initialize();
+  parameters.initialize();    // start the runtime calculation
 
+  // call functions of respective methods
   switch (method) {
     case 1:
       density.method1();
@@ -74,8 +76,9 @@ void start(vector_point source_pts = scr_pts) {
       return;
   }
 
-  parameters.complete();
+  parameters.complete();    // stop runtime calculation
 
+  // calculate utility
   if (method < 5) {
     double utility_queue =
         find_utility_qd(density.queue_density_list, density.fast_forward);
@@ -90,8 +93,8 @@ void start(vector_point source_pts = scr_pts) {
 
   make_graph(density.queue_density_list, density.moving_density_list, imagePath,
              density.fast_forward);
-  // make_csv(queue_density_list, moving_density_list);
 }
+// check if extension is valid or not
 bool hasEnding(std::string const &fileName, std::string const &extension) {
   if (fileName.length() >= extension.length()) {
     return (0 == fileName.compare(fileName.length() - extension.length(),
@@ -106,6 +109,7 @@ int main(int argc, char **argv) {
 
   parameters = Parameters();
 
+  // argument parsing
   int res =
       parse(argc, argv, imagePath, videoPath, density.fast_forward, method,
             density.num_threads, logger.enable, density.resolution);

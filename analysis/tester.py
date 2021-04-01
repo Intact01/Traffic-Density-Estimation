@@ -41,6 +41,9 @@ elif method == '4' or method == '3':
         title = "Method 3 - splitting spatially for threading"
     else:
         title = "Method 4 - splitting frame-wise for threading"
+else:
+    print("Invalid method value.")
+    sys.exit(0)
 
 
 def calc(val, m, a):
