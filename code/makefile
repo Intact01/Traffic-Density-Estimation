@@ -12,11 +12,6 @@ LIB		:= -lpython3.8 -lboost_program_options -lpthread
 OPENCV = `pkg-config opencv --cflags --libs`
 LIBS = $(OPENCV)
 
-# EXECUTABLE	:= main
-
-# $(PROG):$(SRCS)
-# 	$(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(LIBS)
-	
 EXECUTABLE = main
 all: clean $(BIN)/$(EXECUTABLE)
 

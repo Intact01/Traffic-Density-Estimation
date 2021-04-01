@@ -27,6 +27,7 @@ class ThreadOperations {
   vector<cv::Rect> rects;
   cv::VideoCapture cap;
   bool completed = false;
+  vector<bool> frame_processed;
 
   static cv::Mat frame;
   static int total_pixels;
@@ -81,7 +82,9 @@ ThreadOperations::ThreadOperations(cv::VideoCapture capture, int num_threads) {
     qd_lists.push_back(density_list);
   }
   qd_list = vector<double>(num_frames, 0);
+  frame_processed = vector<bool>(num_frames, false);
 }
+
 void* ThreadOperations::consumer() {
   cv::Mat curr_frame;
   int fidx, tidx;
@@ -102,6 +105,8 @@ void* ThreadOperations::consumer() {
     method_args.frame.copyTo(curr_frame);
     fidx = method_args.frame_index;
     tidx = method_args.thread_index;
+
+    frame_processed[fidx] = true;
     frame_empty = true;
 
     pthread_mutex_unlock(&mutex_variable);
@@ -188,13 +193,14 @@ void* ThreadOperations::producer_method4() {
   while (!completed) {
     // acquire lock
     pthread_mutex_lock(&mutex_variable);
-    if (!frame_empty) {
+    while (!frame_empty || (frame_pos > 0 && !frame_processed[frame_pos - 1])) {
       pthread_cond_wait(&Buffer_Queue_Not_Full, &mutex_variable);
     }
     cap >> curr_frame;
     if (curr_frame.empty()) {
       completed = true;
     }
+
     // write to buffer
     method_args = {frame_pos++, -1, curr_frame};
     frame_empty = false;

@@ -60,6 +60,7 @@ def plot_graph():
         calc(x_val, method, args)
     if method == '3' or method == '4':
         calc("", 0, "")
+        time.sleep(5)
 
     print(x_axis_list, time_list, utility_list)
     fig, ax = plt.subplots()
