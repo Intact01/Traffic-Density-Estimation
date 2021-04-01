@@ -75,6 +75,12 @@ def plot_graph():
     ax2.plot(x_axis_list,
              utility_list, color="blue", marker="o")
     ax2.set_ylabel("Utility (fraction)", color="blue", fontsize=14)
+
+    util_max = max(utility_list)
+    util_min = min(utility_list)
+    if (util_max == util_min):
+        ax2.set_ylim([0.99, 1.001])
+
     plt.title(title)
 
     fig.savefig(f"{file_path}/graphs/Method{method}.png",
